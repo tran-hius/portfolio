@@ -1,3 +1,4 @@
+import type { UpdateUserDTO } from "../dtos/update-user-dto.js";
 import User from "../schema/user.schema.js";
 
 export const userRepository = {
@@ -13,7 +14,7 @@ export const userRepository = {
     return await User.create(data);
   },
 
-  async updateById(id: string, data: any) {
+  async updateById(id: string, data: UpdateUserDTO) {
     return await User.findByIdAndUpdate(id, data, {
       new: true,
       runValidators: true,

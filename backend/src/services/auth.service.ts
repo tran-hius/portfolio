@@ -2,18 +2,21 @@ import { TokenService } from "./token.service.js";
 import { UserService } from "./user.service.js";
 import bcrypt from "bcrypt";
 import type { CreateUserDTO } from "../dtos/create-user-dto.js";
-import type { UserResponse } from "../dtos/user-response-dto.js";
 import { userRepository } from "../repositories/user.repository.js";
 import type { LoginDTO } from "../dtos/login-dto.js";
-import type { LoginResponse } from "../dtos/login-response.js";
+import type { LoginResponse } from "../dtos/login-response-dto.js";
+import createHttpError from "http-errors";
 
 export const AuthService = {
-  async create(data: CreateUserDTO): Promise<UserResponse> {
+  async create(data: CreateUserDTO) {
     const { email, password } = data;
+
     const userExists = await userRepository.findByEmail(email);
+
     if (userExists) {
-      throw new Error("Account exists");
+      throw createHttpError.Conflict("Account already exists");
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = {
@@ -23,6 +26,7 @@ export const AuthService = {
     };
 
     const user = await userRepository.create(newUser);
+
     const { password: _, ...userResponse } = user.toObject();
 
     return {
@@ -31,35 +35,35 @@ export const AuthService = {
     };
   },
 
-  async login(data: LoginDTO): Promise<LoginResponse> {
+  async login(data: LoginDTO){
     const { email, password } = data;
 
     const user = await UserService.findByEmail(email);
 
     if (!user) {
-      throw new Error("Invalid user");
+      throw createHttpError.Unauthorized("Invalid credentials");
     }
 
     const comparePassword = await bcrypt.compare(password, user.password);
 
     if (!comparePassword) {
-      throw new Error("Invalid password");
+      throw createHttpError.Unauthorized("Invalid credentials");
     }
 
-    const { accessToken, refreshToken } = TokenService.generateToken({
+    const { accessToken } = TokenService.generateToken({
       userId: user._id.toString(),
       email: user.email,
+      role: user.role,
     });
 
     const { password: _, _id, ...rest } = user;
 
-
-   return {
-     user: {
-       ...rest,
-       _id: _id.toString(),
-     },
-     accessToken,
-   };
+    return {
+      user: {
+        ...rest,
+        _id: _id.toString(),
+      },
+      accessToken,
+    };
   },
 };
