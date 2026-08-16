@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { LoadingScreen } from "../../components/LoadingScreen.js";
 import { Hero } from "../../components/Hero.js";
 import { About } from "../../components/About.js";
 import { Skills } from "../../components/Skills.js";
@@ -7,18 +9,24 @@ import { SystemMonitor } from "../../components/SystemMonitor.js";
 import { Contact } from "../../components/Contact.js";
 
 const HomePage = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
   return (
-    <div className="w-full flex flex-col">
-      <Hero />
-      <About />
-      <Skills />
-      <Projects />
-      <Experience />
-      <SystemMonitor />
-      <Contact />
-    </div>
+    <>
+      {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
+      <div className={`w-full flex flex-col transition-opacity duration-700 ${isLoading ? "opacity-0" : "opacity-100"}`}>
+        <Hero />
+        <About />
+        <Skills />
+        <Projects />
+        <Experience />
+        <SystemMonitor />
+        <Contact />
+      </div>
+    </>
   );
 };
 
 export default HomePage;
+
 
