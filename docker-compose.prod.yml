@@ -1,0 +1,63 @@
+services:
+  mongodb:
+    image: mongo:8
+    container_name: portfolio-mongodb-prod
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: portfolio
+    volumes:
+      - mongodb_prod_data:/data/db
+    networks:
+      - portfolio-prod-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: portfolio-backend-prod
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      MONGO_URI: mongodb://mongodb:27017/portfolio
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://tranhieu.dev,https://www.tranhieu.dev,http://localhost:80,http://localhost:5173}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - portfolio-prod-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: portfolio-frontend-prod
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - portfolio-prod-network
+
+volumes:
+  mongodb_prod_data:
+    driver: local
+
+networks:
+  portfolio-prod-network:
+    driver: bridge
