@@ -3,15 +3,52 @@ services:
     image: mongo:8
     container_name: portfolio-mongodb
     restart: unless-stopped
-
     ports:
       - "27017:27017"
-
     environment:
       MONGO_INITDB_DATABASE: portfolio
-
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - portfolio-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: portfolio-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      MONGO_URI: mongodb://mongodb:27017/portfolio
+      JWT_ACCESS_SECRET: your-super-secret-access-key
+      JWT_REFRESH_SECRET: your-super-secret-refresh-key
+      CLOUDINARY_CLOUD_NAME: digfoub3d
+      CLOUDINARY_API_KEY: 687752919341867
+      CLOUDINARY_API_SECRET: 3Kdbtvr92iHoaQaxlppxWkQtsb4
+    depends_on:
+      - mongodb
+    networks:
+      - portfolio-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: portfolio-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - portfolio-network
 
 volumes:
   mongodb_data:
+
+networks:
+  portfolio-network:
+    driver: bridge
