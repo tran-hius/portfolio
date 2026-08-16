@@ -13,6 +13,20 @@ export interface ProjectFilter {
   isFeatured?: boolean | undefined;
   technology?: string | undefined;
   search?: string | undefined;
+  page?: number | undefined;
+  limit?: number | undefined;
+}
+
+export interface PaginatedProjectsResult {
+  projects: ProjectResponseDTO[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }
 
 const escapeRegex = (str: string): string => {
@@ -36,7 +50,9 @@ export const ProjectService = {
     return ProjectMapper.toResponse(newProject);
   },
 
-  async findAll(filter: ProjectFilter = {}): Promise<ProjectResponseDTO[]> {
+  async findAll(
+    filter: ProjectFilter = {},
+  ): Promise<PaginatedProjectsResult> {
     const mongoFilter: any = {};
 
     if (typeof filter.isFeatured === "boolean") {
@@ -58,8 +74,30 @@ export const ProjectService = {
       ];
     }
 
-    const projects = await projectRepository.findAll(mongoFilter);
-    return ProjectMapper.toResponseList(projects);
+    const total = await projectRepository.count(mongoFilter);
+    const page = Math.max(1, Number(filter.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(filter.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const projects = await projectRepository.findAll(mongoFilter, {
+      sort: { createdAt: -1 },
+      skip,
+      limit,
+    });
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      projects: ProjectMapper.toResponseList(projects),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   },
 
   async findById(id: string): Promise<ProjectResponseDTO> {

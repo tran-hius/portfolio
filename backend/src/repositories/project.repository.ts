@@ -9,9 +9,28 @@ export const projectRepository = {
 
   async findAll(
     filter: Record<string, any> = {},
-    sort: Record<string, 1 | -1> = { createdAt: -1 },
+    options: {
+      sort?: Record<string, 1 | -1>;
+      skip?: number;
+      limit?: number;
+    } = {},
   ) {
-    return await ProjectModel.find(filter).sort(sort);
+    const { sort = { createdAt: -1 }, skip, limit } = options;
+    let query = ProjectModel.find(filter).sort(sort);
+
+    if (typeof skip === "number" && skip > 0) {
+      query = query.skip(skip);
+    }
+
+    if (typeof limit === "number" && limit > 0) {
+      query = query.limit(limit);
+    }
+
+    return await query.exec();
+  },
+
+  async count(filter: Record<string, any> = {}) {
+    return await ProjectModel.countDocuments(filter);
   },
 
   async findById(id: string) {

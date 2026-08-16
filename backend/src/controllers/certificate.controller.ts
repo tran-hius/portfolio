@@ -1,37 +1,24 @@
 import type { Request, Response, NextFunction } from "express";
-import { ProjectService } from "../services/project.service.js";
+import { CertificateService } from "../services/certificate.service.js";
 import { BadRequestError } from "../errors/app.error.js";
 
-export const ProjectController = {
+export const CertificateController = {
   async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const isFeaturedQuery = req.query.isFeatured;
-      const isFeatured =
-        isFeaturedQuery !== undefined
-          ? isFeaturedQuery === "true"
-          : undefined;
-      const technology =
-        typeof req.query.technology === "string"
-          ? req.query.technology
-          : undefined;
+      const issuer =
+        typeof req.query.issuer === "string" ? req.query.issuer : undefined;
       const search =
         typeof req.query.search === "string" ? req.query.search : undefined;
-      const page = req.query.page ? Number(req.query.page) : undefined;
-      const limit = req.query.limit ? Number(req.query.limit) : undefined;
 
-      const result = await ProjectService.findAll({
-        isFeatured,
-        technology,
+      const data = await CertificateService.findAll({
+        issuer,
         search,
-        page,
-        limit,
       });
 
       return res.status(200).json({
         success: true,
-        count: result.projects.length,
-        pagination: result.pagination,
-        data: result.projects,
+        count: data.length,
+        data,
       });
     } catch (error) {
       next(error);
@@ -42,14 +29,14 @@ export const ProjectController = {
     try {
       const id = req.params.id;
       if (!id || typeof id !== "string") {
-        throw new BadRequestError("Project ID is required");
+        throw new BadRequestError("Certificate ID is required");
       }
 
-      const project = await ProjectService.findById(id);
+      const certificate = await CertificateService.findById(id);
 
       return res.status(200).json({
         success: true,
-        data: project,
+        data: certificate,
       });
     } catch (error) {
       next(error);
@@ -59,11 +46,11 @@ export const ProjectController = {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.userId;
-      const result = await ProjectService.create(userId, req.body);
+      const result = await CertificateService.create(userId, req.body);
 
       return res.status(201).json({
         success: true,
-        message: "Project created successfully",
+        message: "Certificate created successfully",
         data: result,
       });
     } catch (error) {
@@ -75,15 +62,19 @@ export const ProjectController = {
     try {
       const id = req.params.id;
       if (!id || typeof id !== "string") {
-        throw new BadRequestError("Project ID is required");
+        throw new BadRequestError("Certificate ID is required");
       }
 
       const userId = req.user!.userId;
-      const result = await ProjectService.updateById(id, userId, req.body);
+      const result = await CertificateService.updateById(
+        id,
+        userId,
+        req.body,
+      );
 
       return res.status(200).json({
         success: true,
-        message: "Project updated successfully",
+        message: "Certificate updated successfully",
         data: result,
       });
     } catch (error) {
@@ -95,11 +86,11 @@ export const ProjectController = {
     try {
       const id = req.params.id;
       if (!id || typeof id !== "string") {
-        throw new BadRequestError("Project ID is required");
+        throw new BadRequestError("Certificate ID is required");
       }
 
       const userId = req.user!.userId;
-      const result = await ProjectService.deleteById(id, userId);
+      const result = await CertificateService.deleteById(id, userId);
 
       return res.status(200).json({
         success: true,

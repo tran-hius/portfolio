@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
-import { ProjectService } from "../services/project.service.js";
+import { SkillService } from "../services/skill.service.js";
 import { BadRequestError } from "../errors/app.error.js";
 
-export const ProjectController = {
+export const SkillController = {
   async getAll(req: Request, res: Response, next: NextFunction) {
     try {
       const isFeaturedQuery = req.query.isFeatured;
@@ -10,28 +10,28 @@ export const ProjectController = {
         isFeaturedQuery !== undefined
           ? isFeaturedQuery === "true"
           : undefined;
-      const technology =
-        typeof req.query.technology === "string"
-          ? req.query.technology
+
+      const category =
+        typeof req.query.category === "string"
+          ? req.query.category
           : undefined;
+
       const search =
         typeof req.query.search === "string" ? req.query.search : undefined;
-      const page = req.query.page ? Number(req.query.page) : undefined;
-      const limit = req.query.limit ? Number(req.query.limit) : undefined;
 
-      const result = await ProjectService.findAll({
+      const grouped = req.query.grouped === "true";
+
+      const data = await SkillService.findAll({
         isFeatured,
-        technology,
+        category,
         search,
-        page,
-        limit,
+        grouped,
       });
 
       return res.status(200).json({
         success: true,
-        count: result.projects.length,
-        pagination: result.pagination,
-        data: result.projects,
+        count: Array.isArray(data) ? data.length : Object.keys(data).length,
+        data,
       });
     } catch (error) {
       next(error);
@@ -42,14 +42,14 @@ export const ProjectController = {
     try {
       const id = req.params.id;
       if (!id || typeof id !== "string") {
-        throw new BadRequestError("Project ID is required");
+        throw new BadRequestError("Skill ID is required");
       }
 
-      const project = await ProjectService.findById(id);
+      const skill = await SkillService.findById(id);
 
       return res.status(200).json({
         success: true,
-        data: project,
+        data: skill,
       });
     } catch (error) {
       next(error);
@@ -59,11 +59,11 @@ export const ProjectController = {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.userId;
-      const result = await ProjectService.create(userId, req.body);
+      const result = await SkillService.create(userId, req.body);
 
       return res.status(201).json({
         success: true,
-        message: "Project created successfully",
+        message: "Skill created successfully",
         data: result,
       });
     } catch (error) {
@@ -75,15 +75,15 @@ export const ProjectController = {
     try {
       const id = req.params.id;
       if (!id || typeof id !== "string") {
-        throw new BadRequestError("Project ID is required");
+        throw new BadRequestError("Skill ID is required");
       }
 
       const userId = req.user!.userId;
-      const result = await ProjectService.updateById(id, userId, req.body);
+      const result = await SkillService.updateById(id, userId, req.body);
 
       return res.status(200).json({
         success: true,
-        message: "Project updated successfully",
+        message: "Skill updated successfully",
         data: result,
       });
     } catch (error) {
@@ -95,11 +95,11 @@ export const ProjectController = {
     try {
       const id = req.params.id;
       if (!id || typeof id !== "string") {
-        throw new BadRequestError("Project ID is required");
+        throw new BadRequestError("Skill ID is required");
       }
 
       const userId = req.user!.userId;
-      const result = await ProjectService.deleteById(id, userId);
+      const result = await SkillService.deleteById(id, userId);
 
       return res.status(200).json({
         success: true,
