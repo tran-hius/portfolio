@@ -28,7 +28,16 @@ export const AuthService = {
 
     const user = await userRepository.create(newUser);
 
-    return UserMapper.toResponse(user);
+    const { accessToken } = TokenService.generateToken({
+      userId: user._id.toString(),
+      email: user.email,
+      role: user.role,
+    });
+
+    return {
+      user: UserMapper.toResponse(user),
+      accessToken,
+    };
   },
 
   async login(data: LoginDTO): Promise<LoginResponseDTO> {

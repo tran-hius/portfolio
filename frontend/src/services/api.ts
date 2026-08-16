@@ -7,7 +7,7 @@ import type {
   SystemMetrics,
 } from "../types/portfolio.js";
 
-const API_BASE = "http://localhost:8888/api/v1";
+const API_BASE = "http://localhost:3001/api/v1";
 
 /**
  * Connect to backend Server-Sent Events (SSE) stream for live active visitor counts

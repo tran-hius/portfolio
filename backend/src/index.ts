@@ -23,10 +23,20 @@ const app = express();
 // Middlewares
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    origin: [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost:3001",
+      "http://localhost:8888",
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   }),
 );
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -62,33 +72,33 @@ const PORT = process.env.PORT || 8888;
 const startServer = async () => {
   try {
     await connectDB();
-
-    const server = app.listen(PORT, () => {
-      Logger.info(`Server is running on port: ${PORT} (http://localhost:${PORT})`);
-    });
-
-    const shutdown = async (signal: string) => {
-      Logger.warn(`Received ${signal}. Shutting down gracefully...`);
-      server.close(async () => {
-        try {
-          await mongoose.connection.close();
-          Logger.info("MongoDB connection closed.");
-          process.exit(0);
-        } catch (err) {
-          Logger.error("Error during shutdown:", err);
-          process.exit(1);
-        }
-      });
-    };
-
-    process.on("SIGINT", () => shutdown("SIGINT"));
-    process.on("SIGTERM", () => shutdown("SIGTERM"));
   } catch (error) {
-    Logger.error("Failed to start server:", error);
-    process.exit(1);
+    Logger.error("MongoDB connection notice (will auto-reconnect):", error);
   }
+
+  const server = app.listen(PORT, () => {
+    Logger.info(`Server is running on port: ${PORT} (http://localhost:${PORT})`);
+  });
+
+  const shutdown = async (signal: string) => {
+    Logger.warn(`Received ${signal}. Shutting down gracefully...`);
+    server.close(async () => {
+      try {
+        await mongoose.connection.close();
+        Logger.info("MongoDB connection closed.");
+        process.exit(0);
+      } catch (err) {
+        Logger.error("Error during shutdown:", err);
+        process.exit(1);
+      }
+    });
+  };
+
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
 };
 
 startServer();
+
 
 

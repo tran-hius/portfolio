@@ -70,9 +70,24 @@ const UserSchema = new Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: function (_doc, ret) {
+        delete ret.password;
+        delete ret.__v;
+        return ret;
+      },
+    },
+    toObject: {
+      transform: function (_doc, ret) {
+        delete ret.password;
+        delete ret.__v;
+        return ret;
+      },
+    },
   },
 );
 
 const User = mongoose.model("User", UserSchema);
 
 export default User;
+
