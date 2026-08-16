@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import createHttpError from "http-errors";
+import { UnauthorizedError, ForbiddenError } from "../errors/app.error.js";
 
 export const authorize = (req: Request, _res: Response, next: NextFunction) => {
   try {
@@ -14,7 +14,7 @@ export const authorize = (req: Request, _res: Response, next: NextFunction) => {
     }
 
     if (!token) {
-      throw new createHttpError.Unauthorized("Bạn chưa đăng nhập");
+      throw new UnauthorizedError("Bạn chưa đăng nhập");
     }
 
     if (token.startsWith('"') && token.endsWith('"')) {
@@ -27,8 +27,8 @@ export const authorize = (req: Request, _res: Response, next: NextFunction) => {
       role: string;
     };
 
-    if (decoded.role.toLowerCase() !== "admin") {
-      throw new createHttpError.Forbidden("Bạn không có quyền truy cập");
+    if (decoded.role?.toLowerCase() !== "admin") {
+      throw new ForbiddenError("Bạn không có quyền truy cập");
     }
 
     req.user = decoded;
@@ -36,13 +36,11 @@ export const authorize = (req: Request, _res: Response, next: NextFunction) => {
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      return next(new createHttpError.Unauthorized("Access Token đã hết hạn"));
+      return next(new UnauthorizedError("Access Token đã hết hạn"));
     }
 
     if (error instanceof jwt.JsonWebTokenError) {
-      return next(
-        new createHttpError.Unauthorized("Access Token không hợp lệ"),
-      );
+      return next(new UnauthorizedError("Access Token không hợp lệ"));
     }
 
     next(error);

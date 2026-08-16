@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
-const ACCESS_EXPIRED = "3m";
-const REFRESH_EXPIRED = "3m";
+const ACCESS_EXPIRED = "1h";
+const REFRESH_EXPIRED = "7d";
 
 export const TokenService = {
   generateToken(payload: { userId: string; email: string, role: string }) {

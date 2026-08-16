@@ -1,11 +1,12 @@
 import { TokenService } from "./token.service.js";
 import { UserService } from "./user.service.js";
-import bcrypt from "bcrypt";
+import { HashUtil } from "../utils/hash.util.js";
+import { UserMapper } from "../mappers/user.mapper.js";
 import type { CreateUserDTO } from "../dtos/create-user-dto.js";
 import { userRepository } from "../repositories/user.repository.js";
 import type { LoginDTO } from "../dtos/login-dto.js";
-import type { LoginResponse } from "../dtos/login-response-dto.js";
-import createHttpError from "http-errors";
+import type { LoginResponseDTO } from "../dtos/login-response-dto.js";
+import { ConflictError, UnauthorizedError } from "../errors/app.error.js";
 
 export const AuthService = {
   async create(data: CreateUserDTO) {
@@ -14,10 +15,10 @@ export const AuthService = {
     const userExists = await userRepository.findByEmail(email);
 
     if (userExists) {
-      throw createHttpError.Conflict("Account already exists");
+      throw new ConflictError("Account already exists");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await HashUtil.hash(password);
 
     const newUser = {
       ...data,
@@ -27,27 +28,22 @@ export const AuthService = {
 
     const user = await userRepository.create(newUser);
 
-    const { password: _, ...userResponse } = user.toObject();
-
-    return {
-      ...userResponse,
-      _id: userResponse._id.toString(),
-    };
+    return UserMapper.toResponse(user);
   },
 
-  async login(data: LoginDTO){
+  async login(data: LoginDTO): Promise<LoginResponseDTO> {
     const { email, password } = data;
 
     const user = await UserService.findByEmail(email);
 
     if (!user) {
-      throw createHttpError.Unauthorized("Invalid credentials");
+      throw new UnauthorizedError("Invalid credentials");
     }
 
-    const comparePassword = await bcrypt.compare(password, user.password);
+    const isMatch = await HashUtil.compare(password, user.password);
 
-    if (!comparePassword) {
-      throw createHttpError.Unauthorized("Invalid credentials");
+    if (!isMatch) {
+      throw new UnauthorizedError("Invalid credentials");
     }
 
     const { accessToken } = TokenService.generateToken({
@@ -56,13 +52,8 @@ export const AuthService = {
       role: user.role,
     });
 
-    const { password: _, _id, ...rest } = user;
-
     return {
-      user: {
-        ...rest,
-        _id: _id.toString(),
-      },
+      user: UserMapper.toResponse(user),
       accessToken,
     };
   },

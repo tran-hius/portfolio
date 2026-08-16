@@ -1,6 +1,6 @@
-import type { UserResponse } from "./user-response-dto.js";
+import type { UserResponseDTO } from "./user-response.dto.js";
 
-export interface LoginResponse {
-  user: UserResponse;
+export interface LoginResponseDTO {
+  user: UserResponseDTO;
   accessToken: string;
 }

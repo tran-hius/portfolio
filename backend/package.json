@@ -28,6 +28,7 @@
     "@types/node": "26.2.0",
     "bcrypt": "^6.0.0",
     "class-validator": "0.15.1",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "5.2.1",
     "http-errors": "^2.0.1",
@@ -36,6 +37,7 @@
     "typescript": "7.0.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/http-errors": "^2.0.5",
     "tsx": "^4.23.12"
   }
