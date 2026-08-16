@@ -1,16 +1,24 @@
+import { Hero } from "../../components/Hero.js";
+import { About } from "../../components/About.js";
+import { Skills } from "../../components/Skills.js";
+import { Projects } from "../../components/Projects.js";
+import { Experience } from "../../components/Experience.js";
+import { SystemMonitor } from "../../components/SystemMonitor.js";
+import { Contact } from "../../components/Contact.js";
+
 const HomePage = () => {
   return (
-    <div className="flex h-full w-full items-center justify-center p-12">
-      <div className="text-center">
-        <h1 className="text-6xl font-display font-bold text-primary tracking-wider mb-4">
-          BLANK CANVAS
-        </h1>
-        <p className="text-white text-xl">
-          Sẵn sàng để xây dựng thiết kế Pink/Black/White mới.
-        </p>
-      </div>
+    <div className="w-full flex flex-col">
+      <Hero />
+      <About />
+      <Skills />
+      <Projects />
+      <Experience />
+      <SystemMonitor />
+      <Contact />
     </div>
   );
 };
 
 export default HomePage;
+
