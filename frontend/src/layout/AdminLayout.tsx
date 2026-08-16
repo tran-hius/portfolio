@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.js";
+import { useAuth } from "../hooks/useAuth.js";
 
 export const AdminLayout = () => {
   const { user, logout } = useAuth();

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   getStoredToken,
   getStoredUser,
@@ -7,25 +7,7 @@ import {
   loginAdmin,
   registerAdmin,
 } from "../services/api.js";
-
-interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-}
-
-interface AuthContextType {
-  user: AuthUser | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
-  register: (email: string, pass: string, name: string) => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext, type AuthUser } from "./auth-context.js";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -78,12 +60,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 };
