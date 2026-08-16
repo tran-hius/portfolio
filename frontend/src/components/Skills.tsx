@@ -66,8 +66,19 @@ export const Skills = () => {
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/50 group-hover:bg-cyan-400 group-hover:scale-125 transition-all" />
                 </div>
 
-                <div>
-                  <h3 className="text-sm sm:text-base font-semibold text-white group-hover:text-cyan-200 transition-colors">
+                <div className="flex items-center gap-2.5 my-2">
+                  {skill.icon ? (
+                    <img
+                      src={skill.icon}
+                      alt={skill.name}
+                      className="w-7 h-7 rounded-lg object-contain bg-white/[0.04] p-1 border border-white/[0.06] group-hover:scale-110 group-hover:border-cyan-400/40 transition-all"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-300 font-mono text-[10px] font-bold group-hover:border-cyan-400/40 group-hover:scale-110 transition-all">
+                      {skill.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <h3 className="text-sm font-semibold text-white group-hover:text-cyan-200 transition-colors">
                     {skill.name}
                   </h3>
                 </div>
