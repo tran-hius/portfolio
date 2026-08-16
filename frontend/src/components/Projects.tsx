@@ -61,33 +61,49 @@ export const Projects = () => {
                         isEven ? "lg:order-1" : "lg:order-2"
                       } w-full h-[240px] sm:h-[280px] rounded-2xl bg-surface-100 dark:bg-gradient-to-br dark:from-surface-50 dark:via-surface-100 dark:to-black p-6 border border-border-subtle relative overflow-hidden flex flex-col justify-between group shadow-sm`}
                     >
-                      <div className="absolute inset-0 bg-radial from-cyan-500/10 via-transparent to-transparent opacity-40 group-hover:opacity-80 transition-opacity" />
+                      {project.imageUrl || project.thumbnail ? (
+                        <div className="absolute inset-0 z-0">
+                          <img
+                            src={project.imageUrl || project.thumbnail || ""}
+                            alt={project.title}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 bg-radial from-cyan-500/10 via-transparent to-transparent opacity-40 group-hover:opacity-80 transition-opacity" />
+                      )}
 
                       <div className="flex items-center justify-between relative z-10">
-                        <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-300 font-medium uppercase px-2.5 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/20">
+                        <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-300 font-medium uppercase px-2.5 py-1 rounded-md bg-cyan-500/10 dark:bg-black/60 border border-cyan-500/20 backdrop-blur-md">
                           {project.category || "Architecture"}
                         </span>
-                        <span className="text-[11px] font-mono text-muted">
+                        <span className="text-[11px] font-mono text-muted dark:text-slate-300 backdrop-blur-sm px-2 py-0.5 rounded bg-black/40">
                           SYSTEM 0{index + 1}
                         </span>
                       </div>
 
-                      <div className="relative z-10 my-auto text-center">
-                        <div className="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center mx-auto mb-3 text-cyan-600 dark:text-cyan-300 group-hover:scale-110 group-hover:border-cyan-400 transition-all shadow-sm">
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                          </svg>
+                      {(!project.imageUrl && !project.thumbnail) && (
+                        <div className="relative z-10 my-auto text-center">
+                          <div className="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center mx-auto mb-3 text-cyan-600 dark:text-cyan-300 group-hover:scale-110 group-hover:border-cyan-400 transition-all shadow-sm">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                          </div>
+                          <span className="text-xs font-mono text-muted group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                            Live Telemetry Ready
+                          </span>
                         </div>
-                        <span className="text-xs font-mono text-muted group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                          Live Telemetry Ready
-                        </span>
-                      </div>
+                      )}
 
-                      <div className="relative z-10 flex items-center justify-between text-[11px] font-mono text-muted border-t border-border-subtle pt-2">
+                      <div className="relative z-10 flex items-center justify-between text-[11px] font-mono text-muted dark:text-slate-300 border-t border-white/[0.1] pt-2 mt-auto backdrop-blur-sm">
                         <span>STATUS: OPERATIONAL</span>
                         <span className="text-emerald-500 dark:text-emerald-400 font-medium">99.9% Uptime</span>
                       </div>
                     </div>
+
 
                     <div
                       className={`lg:col-span-7 ${

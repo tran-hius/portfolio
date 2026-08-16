@@ -1,16 +1,42 @@
+import { lazy, Suspense, type ReactNode } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import MainLayout from "../layout/MainLayout.js";
 import HomePage from "../pages/home/HomePage.js";
-import { AdminLoginPage } from "../pages/admin/AdminLoginPage.js";
 import { ProtectedRoute } from "../components/ProtectedRoute.js";
-import { AdminLayout } from "../layout/AdminLayout.js";
-import { AdminOverviewPage } from "../pages/admin/AdminOverviewPage.js";
-import { AdminProjectsPage } from "../pages/admin/AdminProjectsPage.js";
-import { AdminSkillsPage } from "../pages/admin/AdminSkillsPage.js";
-import { AdminExperiencesPage } from "../pages/admin/AdminExperiencesPage.js";
-import { AdminEducationPage } from "../pages/admin/AdminEducationPage.js";
-import { AdminCertificatesPage } from "../pages/admin/AdminCertificatesPage.js";
-import { AdminVisitorsPage } from "../pages/admin/AdminVisitorsPage.js";
+import { RouteLoadingFallback } from "../components/RouteLoadingFallback.js";
+
+// Lazy-loaded components for optimal bundle splitting and performance
+const AdminLoginPage = lazy(() =>
+  import("../pages/admin/AdminLoginPage.js").then((m) => ({ default: m.AdminLoginPage })),
+);
+const AdminLayout = lazy(() =>
+  import("../layout/AdminLayout.js").then((m) => ({ default: m.AdminLayout })),
+);
+const AdminOverviewPage = lazy(() =>
+  import("../pages/admin/AdminOverviewPage.js").then((m) => ({ default: m.AdminOverviewPage })),
+);
+const AdminProjectsPage = lazy(() =>
+  import("../pages/admin/AdminProjectsPage.js").then((m) => ({ default: m.AdminProjectsPage })),
+);
+const AdminSkillsPage = lazy(() =>
+  import("../pages/admin/AdminSkillsPage.js").then((m) => ({ default: m.AdminSkillsPage })),
+);
+const AdminExperiencesPage = lazy(() =>
+  import("../pages/admin/AdminExperiencesPage.js").then((m) => ({ default: m.AdminExperiencesPage })),
+);
+const AdminEducationPage = lazy(() =>
+  import("../pages/admin/AdminEducationPage.js").then((m) => ({ default: m.AdminEducationPage })),
+);
+const AdminCertificatesPage = lazy(() =>
+  import("../pages/admin/AdminCertificatesPage.js").then((m) => ({ default: m.AdminCertificatesPage })),
+);
+const AdminVisitorsPage = lazy(() =>
+  import("../pages/admin/AdminVisitorsPage.js").then((m) => ({ default: m.AdminVisitorsPage })),
+);
+
+const withLazy = (Component: ReactNode) => (
+  <Suspense fallback={<RouteLoadingFallback />}>{Component}</Suspense>
+);
 
 export const router = createBrowserRouter([
   {
@@ -25,42 +51,42 @@ export const router = createBrowserRouter([
   },
   {
     path: "/admin/login",
-    element: <AdminLoginPage />,
+    element: withLazy(<AdminLoginPage />),
   },
   {
     path: "/admin",
     element: <ProtectedRoute />,
     children: [
       {
-        element: <AdminLayout />,
+        element: withLazy(<AdminLayout />),
         children: [
           {
             index: true,
-            element: <AdminOverviewPage />,
+            element: withLazy(<AdminOverviewPage />),
           },
           {
             path: "projects",
-            element: <AdminProjectsPage />,
+            element: withLazy(<AdminProjectsPage />),
           },
           {
             path: "skills",
-            element: <AdminSkillsPage />,
+            element: withLazy(<AdminSkillsPage />),
           },
           {
             path: "experiences",
-            element: <AdminExperiencesPage />,
+            element: withLazy(<AdminExperiencesPage />),
           },
           {
             path: "education",
-            element: <AdminEducationPage />,
+            element: withLazy(<AdminEducationPage />),
           },
           {
             path: "certificates",
-            element: <AdminCertificatesPage />,
+            element: withLazy(<AdminCertificatesPage />),
           },
           {
             path: "visitors",
-            element: <AdminVisitorsPage />,
+            element: withLazy(<AdminVisitorsPage />),
           },
         ],
       },

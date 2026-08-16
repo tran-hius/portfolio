@@ -1,4 +1,6 @@
-import { Hero3D } from "./Hero3D.js";
+import { lazy, Suspense } from "react";
+
+const Hero3D = lazy(() => import("./Hero3D.js").then((m) => ({ default: m.Hero3D })));
 
 export const Hero = () => {
   return (
@@ -76,7 +78,15 @@ export const Hero = () => {
         </div>
 
         <div className="lg:col-span-5 flex items-center justify-center relative animate-[fadeIn_1.2s_cubic-bezier(0.16,1,0.3,1)_0.4s_both]">
-          <Hero3D />
+          <Suspense
+            fallback={
+              <div className="w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] rounded-full border border-cyan-500/10 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-cyan-500/10 blur-xl animate-pulse" />
+              </div>
+            }
+          >
+            <Hero3D />
+          </Suspense>
         </div>
       </div>
     </section>

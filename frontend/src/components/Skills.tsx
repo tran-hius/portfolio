@@ -84,8 +84,11 @@ export const Skills = () => {
                       <img
                         src={skill.icon}
                         alt={skill.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-7 h-7 rounded-lg object-contain bg-surface-100 p-1 border border-border-subtle group-hover:scale-110 group-hover:border-cyan-500/40 transition-all"
                       />
+
                     ) : (
                       <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-600 dark:text-cyan-300 font-mono text-[10px] font-bold group-hover:border-cyan-500/40 group-hover:scale-110 transition-all">
                         {skill.name.slice(0, 2).toUpperCase()}
