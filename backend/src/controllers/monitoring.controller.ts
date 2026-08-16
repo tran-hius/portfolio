@@ -2,9 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { MonitoringService } from "../services/monitoring.service.js";
 
 export const MonitoringController = {
-  /**
-   * Health check endpoint: returns operational status and database latency
-   */
+  
   async getHealth(_req: Request, res: Response, next: NextFunction) {
     try {
       const health = await MonitoringService.getHealth();
@@ -19,9 +17,6 @@ export const MonitoringController = {
     }
   },
 
-  /**
-   * Detailed system metrics endpoint: memory, uptime, request throughput, error rate
-   */
   async getMetrics(_req: Request, res: Response, next: NextFunction) {
     try {
       const metrics = await MonitoringService.getMetrics();

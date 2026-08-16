@@ -18,25 +18,45 @@ const escapeRegex = (str: string): string => {
   return str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 };
 
+const cleanString = (val?: any): string | null => {
+  if (val === undefined || val === null) return null;
+  const str = String(val).trim();
+  return str.length > 0 ? str : null;
+};
+
 export const CertificateService = {
   async create(
     userId: string,
     data: CreateCertificateDTO,
   ): Promise<CertificateResponseDTO> {
-    if (!data.title || !data.title.trim()) {
+    const title = cleanString(data.title);
+    const issuer = cleanString(data.issuer);
+    const issueDate = cleanString(data.issueDate);
+
+    if (!title) {
       throw new BadRequestError("Certificate title is required");
     }
-    if (!data.issuer || !data.issuer.trim()) {
+    if (!issuer) {
       throw new BadRequestError("Issuer is required");
     }
-    if (!data.issueDate) {
+    if (!issueDate) {
       throw new BadRequestError("Issue date is required");
     }
 
+    const expiryDate = cleanString(data.expiryDate);
+    const credentialId = cleanString(data.credentialId);
+    const credentialUrl = cleanString(data.credentialUrl);
+    const imageUrl = cleanString(data.imageUrl);
+
     const newCert = await certificateRepository.create({
-      ...data,
-      title: data.title.trim(),
-      issuer: data.issuer.trim(),
+      title,
+      issuer,
+      issueDate,
+      expiryDate,
+      credentialId,
+      credentialUrl,
+      imageUrl,
+      order: typeof data.order === "number" ? data.order : 0,
       userId,
     });
 
@@ -92,7 +112,47 @@ export const CertificateService = {
       );
     }
 
-    const updated = await certificateRepository.updateById(id, data);
+    const updatePayload: Record<string, any> = {};
+
+    if (data.title !== undefined) {
+      const title = cleanString(data.title);
+      if (!title) throw new BadRequestError("Certificate title cannot be empty");
+      updatePayload.title = title;
+    }
+
+    if (data.issuer !== undefined) {
+      const issuer = cleanString(data.issuer);
+      if (!issuer) throw new BadRequestError("Issuer cannot be empty");
+      updatePayload.issuer = issuer;
+    }
+
+    if (data.issueDate !== undefined) {
+      const issueDate = cleanString(data.issueDate);
+      if (!issueDate) throw new BadRequestError("Issue date cannot be empty");
+      updatePayload.issueDate = issueDate;
+    }
+
+    if (data.expiryDate !== undefined) {
+      updatePayload.expiryDate = cleanString(data.expiryDate);
+    }
+
+    if (data.credentialId !== undefined) {
+      updatePayload.credentialId = cleanString(data.credentialId);
+    }
+
+    if (data.credentialUrl !== undefined) {
+      updatePayload.credentialUrl = cleanString(data.credentialUrl);
+    }
+
+    if (data.imageUrl !== undefined) {
+      updatePayload.imageUrl = cleanString(data.imageUrl);
+    }
+
+    if (data.order !== undefined) {
+      updatePayload.order = Number(data.order) || 0;
+    }
+
+    const updated = await certificateRepository.updateById(id, updatePayload);
     return CertificateMapper.toResponse(updated);
   },
 

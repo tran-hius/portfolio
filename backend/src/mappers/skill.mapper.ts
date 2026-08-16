@@ -1,9 +1,7 @@
 import type { SkillResponseDTO } from "../dtos/skill-response.dto.js";
 
 export class SkillMapper {
-  /**
-   * Transforms a Skill mongoose document or raw object into a SkillResponseDTO
-   */
+  
   static toResponse(skill: any): SkillResponseDTO {
     if (!skill) return null as any;
 
@@ -25,9 +23,6 @@ export class SkillMapper {
     };
   }
 
-  /**
-   * Transforms a list of skills into SkillResponseDTO array
-   */
   static toResponseList(skills: any[]): SkillResponseDTO[] {
     if (!Array.isArray(skills)) return [];
     return skills.map((s) => this.toResponse(s));

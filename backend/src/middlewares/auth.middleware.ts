@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { UnauthorizedError, ForbiddenError } from "../errors/app.error.js";
+import { envConfig } from "../config/env.config.js";
 
 export const authorize = (req: Request, _res: Response, next: NextFunction) => {
   try {
@@ -21,7 +22,7 @@ export const authorize = (req: Request, _res: Response, next: NextFunction) => {
       token = token.slice(1, -1);
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as {
+    const decoded = jwt.verify(token, envConfig.JWT_ACCESS_SECRET) as {
       userId: string;
       email: string;
       role: string;

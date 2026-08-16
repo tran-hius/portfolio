@@ -18,25 +18,47 @@ const escapeRegex = (str: string): string => {
   return str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 };
 
+const cleanString = (val?: any): string | null => {
+  if (val === undefined || val === null) return null;
+  const str = String(val).trim();
+  return str.length > 0 ? str : null;
+};
+
 export const EducationService = {
   async create(
     userId: string,
     data: CreateEducationDTO,
   ): Promise<EducationResponseDTO> {
-    if (!data.institution || !data.institution.trim()) {
+    const institution = cleanString(data.institution);
+    const degree = cleanString(data.degree);
+    const startDate = cleanString(data.startDate);
+
+    if (!institution) {
       throw new BadRequestError("Institution name is required");
     }
-    if (!data.degree || !data.degree.trim()) {
+    if (!degree) {
       throw new BadRequestError("Degree is required");
     }
-    if (!data.startDate) {
+    if (!startDate) {
       throw new BadRequestError("Start date is required");
     }
 
+    const isCurrent = Boolean(data.isCurrent);
+    const endDate = isCurrent ? null : cleanString(data.endDate);
+    const fieldOfStudy = cleanString(data.fieldOfStudy);
+    const grade = cleanString(data.grade);
+    const description = cleanString(data.description);
+
     const newEdu = await educationRepository.create({
-      ...data,
-      institution: data.institution.trim(),
-      degree: data.degree.trim(),
+      institution,
+      degree,
+      startDate,
+      endDate,
+      isCurrent,
+      fieldOfStudy,
+      grade,
+      description,
+      order: typeof data.order === "number" ? data.order : 0,
       userId,
     });
 
@@ -92,7 +114,52 @@ export const EducationService = {
       );
     }
 
-    const updated = await educationRepository.updateById(id, data);
+    const updatePayload: Record<string, any> = {};
+
+    if (data.institution !== undefined) {
+      const institution = cleanString(data.institution);
+      if (!institution) throw new BadRequestError("Institution name cannot be empty");
+      updatePayload.institution = institution;
+    }
+
+    if (data.degree !== undefined) {
+      const degree = cleanString(data.degree);
+      if (!degree) throw new BadRequestError("Degree cannot be empty");
+      updatePayload.degree = degree;
+    }
+
+    if (data.startDate !== undefined) {
+      const startDate = cleanString(data.startDate);
+      if (!startDate) throw new BadRequestError("Start date cannot be empty");
+      updatePayload.startDate = startDate;
+    }
+
+    if (data.isCurrent !== undefined) {
+      updatePayload.isCurrent = Boolean(data.isCurrent);
+    }
+
+    if (data.endDate !== undefined || data.isCurrent !== undefined) {
+      const current = data.isCurrent !== undefined ? Boolean(data.isCurrent) : existing.isCurrent;
+      updatePayload.endDate = current ? null : cleanString(data.endDate);
+    }
+
+    if (data.fieldOfStudy !== undefined) {
+      updatePayload.fieldOfStudy = cleanString(data.fieldOfStudy);
+    }
+
+    if (data.grade !== undefined) {
+      updatePayload.grade = cleanString(data.grade);
+    }
+
+    if (data.description !== undefined) {
+      updatePayload.description = cleanString(data.description);
+    }
+
+    if (data.order !== undefined) {
+      updatePayload.order = Number(data.order) || 0;
+    }
+
+    const updated = await educationRepository.updateById(id, updatePayload);
     return EducationMapper.toResponse(updated);
   },
 

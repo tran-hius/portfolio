@@ -12,7 +12,7 @@ export const useScrollReveal = (options: ScrollRevealOptions = {}) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Check for prefers-reduced-motion
+    
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
       setIsVisible(true);

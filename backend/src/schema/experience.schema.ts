@@ -5,8 +5,8 @@ export interface IExperience {
   company: string;
   position: string;
   location?: string | null | undefined;
-  startDate: Date;
-  endDate?: Date | null | undefined;
+  startDate: string | Date;
+  endDate?: string | Date | null | undefined;
   isCurrent?: boolean | undefined;
   description?: string | null | undefined;
   technologies?: string[] | undefined;
@@ -39,11 +39,11 @@ const experienceSchema = new Schema<IExperience>(
       trim: true,
     },
     startDate: {
-      type: Date,
+      type: Schema.Types.Mixed,
       required: true,
     },
     endDate: {
-      type: Date,
+      type: Schema.Types.Mixed,
       default: null,
     },
     isCurrent: {
@@ -69,7 +69,6 @@ const experienceSchema = new Schema<IExperience>(
   },
 );
 
-// Compound index for user experiences ordered by date and priority
 experienceSchema.index({ userId: 1, order: 1, startDate: -1 });
 
 export const ExperienceModel = model<IExperience>(

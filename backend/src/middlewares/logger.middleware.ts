@@ -19,16 +19,14 @@ export const requestLogger = (
   const startTime = process.hrtime.bigint();
 
   res.on("finish", () => {
-    // Ignore internal SSE heartbeat or health poll from verbose spam if needed, or log everything cleanly
+    
     const endTime = process.hrtime.bigint();
     const durationMs = Number(endTime - startTime) / 1_000_000;
     const ip = getClientIp(req);
     const url = req.originalUrl || req.url;
 
-    // Record metrics
     MonitoringService.recordRequest(res.statusCode, durationMs);
 
-    // Skip logging continuous SSE ping comments to keep terminal clean
     if (url.startsWith("/api/v1/analytics/realtime") && res.statusCode === 200) {
       return;
     }

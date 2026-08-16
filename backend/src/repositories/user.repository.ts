@@ -24,4 +24,9 @@ export const userRepository = {
   async deleteById(id: string) {
     return await User.findByIdAndDelete(id);
   },
+
+  async count(filter: any = {}) {
+    return await User.countDocuments(filter);
+  },
 };
+

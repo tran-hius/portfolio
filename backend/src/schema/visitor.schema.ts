@@ -46,7 +46,6 @@ const visitorSchema = new Schema<IVisitor>(
   },
 );
 
-// Compound index for querying visits over time by IP
 visitorSchema.index({ ip: 1, visitedAt: -1 });
 
 export const VisitorModel = model<IVisitor>("Visitor", visitorSchema);

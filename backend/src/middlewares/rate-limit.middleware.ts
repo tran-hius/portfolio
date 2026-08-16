@@ -20,7 +20,6 @@ export const createRateLimiter = (options: RateLimitOptions) => {
 
   const hits = new Map<string, ClientRecord>();
 
-  // Periodically clean up expired entries every 5 minutes
   const cleanupInterval = setInterval(() => {
     const now = Date.now();
     for (const [ip, record] of hits.entries()) {
@@ -30,17 +29,12 @@ export const createRateLimiter = (options: RateLimitOptions) => {
     }
   }, 5 * 60 * 1000);
 
-  // Unref interval so it does not block Node process exit
   if (typeof cleanupInterval.unref === "function") {
     cleanupInterval.unref();
   }
 
   return (req: Request, res: Response, next: NextFunction) => {
-    const ip =
-      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
-      req.ip ||
-      req.socket.remoteAddress ||
-      "unknown-ip";
+    const ip = req.ip || req.socket.remoteAddress || "unknown-ip";
 
     const now = Date.now();
     const record = hits.get(ip);
@@ -72,10 +66,6 @@ export const createRateLimiter = (options: RateLimitOptions) => {
   };
 };
 
-/**
- * Pre-configured rate limiter for authentication routes:
- * Allows 15 requests per 15-minute window per IP.
- */
 export const authLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 15,

@@ -3,8 +3,11 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
 import connectDB from "./config/database.js";
+import { envConfig } from "./config/env.config.js";
 import authRouter from "./routers/auth.routes.js";
 import projectRouter from "./routers/project.routes.js";
 import skillRouter from "./routers/skill.routes.js";
@@ -16,11 +19,21 @@ import monitoringRouter from "./routers/monitoring.routes.js";
 import uploadRouter from "./routers/upload.routes.js";
 import { requestLogger } from "./middlewares/logger.middleware.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
+import { AuthService } from "./services/auth.service.js";
 import { Logger } from "./utils/logger.util.js";
+
 
 const app = express();
 
-// Middlewares
+app.set("trust proxy", 1);
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+  }),
+);
+
 app.use(
   cors({
     origin: [
@@ -33,26 +46,16 @@ app.use(
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "x-admin-secret"],
   }),
 );
 
+app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// HTTP Request Logger Middleware
 app.use(requestLogger);
 
-// Security Headers Middleware
-app.use((_req, res, next) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "SAMEORIGIN");
-  res.setHeader("X-XSS-Protection", "0");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  next();
-});
-
-// Routes
 app.use("/health", monitoringRouter);
 app.use("/api/v1/system", monitoringRouter);
 app.use("/api/v1/auth", authRouter);
@@ -64,17 +67,18 @@ app.use("/api/v1/certificates", certificateRouter);
 app.use("/api/v1/upload", uploadRouter);
 app.use("/api/v1/analytics", analyticsRouter);
 
-// Global Error Handler Middleware
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 8888;
+const PORT = envConfig.PORT;
 
 const startServer = async () => {
   try {
     await connectDB();
+    await AuthService.seedInitialAdmin();
   } catch (error) {
     Logger.error("MongoDB connection notice (will auto-reconnect):", error);
   }
+
 
   const server = app.listen(PORT, () => {
     Logger.info(`Server is running on port: ${PORT} (http://localhost:${PORT})`);
@@ -99,6 +103,3 @@ const startServer = async () => {
 };
 
 startServer();
-
-
-

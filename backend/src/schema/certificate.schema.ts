@@ -4,8 +4,8 @@ export interface ICertificate {
   userId: Types.ObjectId;
   title: string;
   issuer: string;
-  issueDate: Date;
-  expiryDate?: Date | null | undefined;
+  issueDate: string | Date;
+  expiryDate?: string | Date | null | undefined;
   credentialId?: string | null | undefined;
   credentialUrl?: string | null | undefined;
   imageUrl?: string | null | undefined;
@@ -33,11 +33,11 @@ const certificateSchema = new Schema<ICertificate>(
       trim: true,
     },
     issueDate: {
-      type: Date,
+      type: Schema.Types.Mixed,
       required: true,
     },
     expiryDate: {
-      type: Date,
+      type: Schema.Types.Mixed,
       default: null,
     },
     credentialId: {
@@ -65,7 +65,6 @@ const certificateSchema = new Schema<ICertificate>(
   },
 );
 
-// Compound index for user certificates ordered by issue date and priority
 certificateSchema.index({ userId: 1, order: 1, issueDate: -1 });
 
 export const CertificateModel = model<ICertificate>(

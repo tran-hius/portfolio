@@ -5,10 +5,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "seed:admin": "tsx src/scripts/seed-admin.ts",
     "debug": "node --import tsx --inspect-brk=0.0.0.0:9229 src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
+
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tran-hius/portfolio.git"
@@ -23,14 +25,17 @@
   "homepage": "https://github.com/tran-hius/portfolio#readme",
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "26.2.0",
     "bcrypt": "^6.0.0",
     "class-validator": "0.15.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "5.2.1",
+    "helmet": "^8.3.0",
     "http-errors": "^2.0.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "9.2.2",

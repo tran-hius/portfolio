@@ -1,9 +1,7 @@
 import type { ProjectResponseDTO } from "../dtos/project-response.dto.js";
 
 export class ProjectMapper {
-  /**
-   * Transforms a Project mongoose document or raw object into a ProjectResponseDTO
-   */
+  
   static toResponse(project: any): ProjectResponseDTO {
     if (!project) return null as any;
 
@@ -28,9 +26,6 @@ export class ProjectMapper {
     };
   }
 
-  /**
-   * Transforms a list of projects into ProjectResponseDTO array
-   */
   static toResponseList(projects: any[]): ProjectResponseDTO[] {
     if (!Array.isArray(projects)) return [];
     return projects.map((p) => this.toResponse(p));

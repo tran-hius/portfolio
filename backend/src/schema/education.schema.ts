@@ -5,8 +5,8 @@ export interface IEducation {
   institution: string;
   degree: string;
   fieldOfStudy?: string | null | undefined;
-  startDate: Date;
-  endDate?: Date | null | undefined;
+  startDate: string | Date;
+  endDate?: string | Date | null | undefined;
   isCurrent?: boolean | undefined;
   grade?: string | null | undefined;
   description?: string | null | undefined;
@@ -39,11 +39,11 @@ const educationSchema = new Schema<IEducation>(
       trim: true,
     },
     startDate: {
-      type: Date,
+      type: Schema.Types.Mixed,
       required: true,
     },
     endDate: {
-      type: Date,
+      type: Schema.Types.Mixed,
       default: null,
     },
     isCurrent: {
@@ -70,7 +70,6 @@ const educationSchema = new Schema<IEducation>(
   },
 );
 
-// Compound index for user educations
 educationSchema.index({ userId: 1, order: 1, startDate: -1 });
 
 export const EducationModel = model<IEducation>("Education", educationSchema);

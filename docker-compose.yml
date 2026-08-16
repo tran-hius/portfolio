@@ -25,9 +25,15 @@ services:
       MONGO_URI: mongodb://mongodb:27017/portfolio
       JWT_ACCESS_SECRET: your-super-secret-access-key
       JWT_REFRESH_SECRET: your-super-secret-refresh-key
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@tranhieu.dev}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@123456}
       CLOUDINARY_CLOUD_NAME: digfoub3d
       CLOUDINARY_API_KEY: 687752919341867
       CLOUDINARY_API_SECRET: 3Kdbtvr92iHoaQaxlppxWkQtsb4
+
+
+    volumes:
+      - ./backend/src:/app/src
     depends_on:
       - mongodb
     networks:
@@ -41,6 +47,9 @@ services:
     restart: unless-stopped
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
     depends_on:
       - backend
     networks:

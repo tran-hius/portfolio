@@ -5,7 +5,6 @@ import { About } from "../../components/About.js";
 import { Skills } from "../../components/Skills.js";
 import { Projects } from "../../components/Projects.js";
 import { Experience } from "../../components/Experience.js";
-import { SystemMonitor } from "../../components/SystemMonitor.js";
 import { Contact } from "../../components/Contact.js";
 
 const HomePage = () => {
@@ -20,7 +19,6 @@ const HomePage = () => {
         <Skills />
         <Projects />
         <Experience />
-        <SystemMonitor />
         <Contact />
       </div>
     </>
@@ -28,5 +26,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
-

@@ -2,68 +2,131 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-color: #f8fafc;
+  --text-color: #0f172a;
+  --text-muted: #64748b;
+  --text-muted-foreground: #94a3b8;
+  --surface-50: #ffffff;
+  --surface-100: #f1f5f9;
+  --surface-200: #e2e8f0;
+  --surface-300: #cbd5e1;
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-highlight: rgba(15, 23, 42, 0.16);
+  --accent-color: #0284c7;
+  --accent-glow: rgba(2, 132, 199, 0.15);
+  --glass-nav-bg: rgba(248, 250, 252, 0.85);
+  --glass-nav-border: rgba(15, 23, 42, 0.08);
+}
+
+.dark {
+  --bg-color: #050507;
+  --text-color: #f4f4f6;
+  --text-muted: #8f909e;
+  --text-muted-foreground: #a1a1aa;
+  --surface-50: #14141c;
+  --surface-100: #0e0e14;
+  --surface-200: #09090d;
+  --surface-300: #050507;
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-highlight: rgba(255, 255, 255, 0.15);
+  --accent-color: #38bdf8;
+  --accent-glow: rgba(56, 189, 248, 0.15);
+  --glass-nav-bg: rgba(5, 5, 7, 0.78);
+  --glass-nav-border: rgba(255, 255, 255, 0.07);
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
+  }
+
+  html.dark {
     color-scheme: dark;
   }
 
-  body {
-    background-color: #050507;
-    color: #f4f4f6;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    overflow-x: hidden;
+  html:not(.dark) {
+    color-scheme: light;
   }
 
-  /* Custom Slim Scrollbar */
-  ::-webkit-scrollbar {
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  .dark ::-webkit-scrollbar {
     width: 6px;
   }
-  ::-webkit-scrollbar-track {
+  .dark ::-webkit-scrollbar-track {
     background: #050507;
   }
-  ::-webkit-scrollbar-thumb {
+  .dark ::-webkit-scrollbar-thumb {
     background: #1e1e2d;
     border-radius: 9999px;
   }
-  ::-webkit-scrollbar-thumb:hover {
+  .dark ::-webkit-scrollbar-thumb:hover {
     background: #38bdf8;
+  }
+
+  html:not(.dark) ::-webkit-scrollbar {
+    width: 6px;
+  }
+  html:not(.dark) ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+  html:not(.dark) ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+  html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+    background: #0284c7;
   }
 }
 
-/* Glassmorphic Surfaces */
 .glass-nav {
-  background: rgba(5, 5, 7, 0.75);
+  background: var(--glass-nav-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--glass-nav-border);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-50);
+  border: 1px solid var(--border-subtle);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.dark .glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .glass-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.08), 0 0 20px -5px var(--accent-glow);
+}
+
+.dark .glass-card:hover {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
   border-color: rgba(56, 189, 248, 0.3);
-  transform: translateY(-2px);
   box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7), 0 0 20px -5px rgba(56, 189, 248, 0.15);
 }
 
-/* Subtle Ambient Glow */
 .ambient-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle at 50% 50%, var(--accent-glow) 0%, transparent 70%);
 }
 
 .ambient-glow-indigo {
   background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
 }
 
-/* Pulse animation for live visitor status */
 @keyframes soft-pulse {
   0%, 100% {
     opacity: 1;
@@ -79,7 +142,6 @@
   animation: soft-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Keyframes for entrance reveals */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -100,7 +162,6 @@
   }
 }
 
-/* Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

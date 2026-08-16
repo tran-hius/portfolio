@@ -55,7 +55,6 @@ const skillSchema = new Schema<ISkill>(
   },
 );
 
-// Compound index for efficient category-based ordering
 skillSchema.index({ category: 1, order: 1, createdAt: -1 });
 
 export const SkillModel = model<ISkill>("Skill", skillSchema);

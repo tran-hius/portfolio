@@ -71,7 +71,6 @@ export const SkillService = {
     const skills = await skillRepository.findAll(mongoFilter);
     const mappedList = SkillMapper.toResponseList(skills);
 
-    // If caller requested category grouped format
     if (filter.grouped) {
       const grouped: Record<string, SkillResponseDTO[]> = {};
       for (const skill of mappedList) {

@@ -21,9 +21,7 @@ const metrics: RequestMetrics = {
 const serverStartTime = new Date();
 
 export const MonitoringService = {
-  /**
-   * Record a completed HTTP request for metric calculations
-   */
+  
   recordRequest(statusCode: number, durationMs: number): void {
     metrics.totalRequests += 1;
     metrics.totalDurationMs += durationMs;
@@ -39,9 +37,6 @@ export const MonitoringService = {
     }
   },
 
-  /**
-   * Perform health check including database ping
-   */
   async getHealth() {
     const isDbConnected = mongoose.connection.readyState === 1;
     let dbLatencyMs: number | null = null;
@@ -70,9 +65,6 @@ export const MonitoringService = {
     };
   },
 
-  /**
-   * Retrieve detailed system and traffic metrics
-   */
   async getMetrics() {
     const health = await this.getHealth();
     const mem = process.memoryUsage();
@@ -97,9 +89,7 @@ export const MonitoringService = {
       server: {
         startTime: serverStartTime.toISOString(),
         uptimeSeconds: Math.floor(process.uptime()),
-        nodeVersion: process.version,
-        platform: process.platform,
-        pid: process.pid,
+        nodeVersion: process.version.split(".")[0] || "v20",
       },
       health: health.status,
       database: health.database,

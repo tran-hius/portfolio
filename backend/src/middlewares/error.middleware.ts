@@ -8,7 +8,7 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction,
 ) => {
-  // If it's our custom AppError
+  
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       success: false,
@@ -19,7 +19,6 @@ export const errorHandler = (
     });
   }
 
-  // Handle Mongoose CastError (invalid ObjectId format)
   if (err instanceof mongoose.Error.CastError) {
     return res.status(400).json({
       success: false,
@@ -29,7 +28,6 @@ export const errorHandler = (
     });
   }
 
-  // Handle Mongoose ValidationError
   if (err instanceof mongoose.Error.ValidationError) {
     const errorDetails = Object.values(err.errors).map((e: any) => ({
       field: e.path,
@@ -45,7 +43,6 @@ export const errorHandler = (
     });
   }
 
-  // Log unhandled server errors
   console.error("Unhandled Error:", err);
 
   const isProduction = process.env.NODE_ENV === "production";

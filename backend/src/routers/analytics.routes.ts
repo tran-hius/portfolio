@@ -4,11 +4,9 @@ import { authorize } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-// Public Realtime SSE Stream & Summary Stats
 router.get("/realtime", AnalyticsController.realtimeStream);
 router.get("/stats", AnalyticsController.getStats);
-
-// Protected Admin Visitor Logs
 router.get("/logs", authorize, AnalyticsController.getLogs);
+router.get("/visitors", authorize, AnalyticsController.getLogs);
 
 export default router;

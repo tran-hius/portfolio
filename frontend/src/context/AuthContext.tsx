@@ -5,24 +5,43 @@ import {
   setStoredAuth,
   clearStoredAuth,
   loginAdmin,
-  registerAdmin,
+  logoutAdmin,
+  getMe,
+  updateAdminProfile,
 } from "../services/api.js";
-import { AuthContext, type AuthUser } from "./auth-context.js";
+import { AuthContext, type AuthUser, type UpdateProfilePayload } from "./auth-context.js";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const refreshUser = async () => {
+    try {
+      const u = await getMe();
+      if (u) {
+        setUser(u);
+        const curToken = getStoredToken();
+        if (curToken) setStoredAuth(curToken, u);
+      }
+    } catch {
+      // If fetching fails, keep stored
+    }
+  };
+
   useEffect(() => {
     const storedToken = getStoredToken();
     const storedUser = getStoredUser();
 
-    if (storedToken && storedUser) {
+    if (storedToken) {
       setToken(storedToken);
-      setUser(storedUser);
+      if (storedUser) {
+        setUser(storedUser);
+      }
+      refreshUser().finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const login = async (email: string, pass: string) => {
@@ -32,17 +51,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setStoredAuth(data.accessToken, data.user);
   };
 
-  const register = async (email: string, pass: string, name: string) => {
-    const data = await registerAdmin(email, pass, name);
-    setToken(data.accessToken);
-    setUser(data.user);
-    setStoredAuth(data.accessToken, data.user);
+  const logout = async () => {
+    try {
+      await logoutAdmin();
+    } catch {
+      // Ignore
+    } finally {
+      clearStoredAuth();
+      setToken(null);
+      setUser(null);
+    }
   };
 
-  const logout = () => {
-    clearStoredAuth();
-    setToken(null);
-    setUser(null);
+  const updateProfile = async (payload: UpdateProfilePayload): Promise<AuthUser> => {
+    const updated = await updateAdminProfile(payload);
+    setUser(updated);
+    const curToken = getStoredToken();
+    if (curToken) {
+      setStoredAuth(curToken, updated);
+    }
+    return updated;
   };
 
   return (
@@ -53,8 +81,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAuthenticated: !!token,
         isLoading,
         login,
-        register,
         logout,
+        updateProfile,
+        refreshUser,
       }}
     >
       {children}

@@ -7,6 +7,13 @@ import {
   uploadImage,
 } from "../../services/api.js";
 import type { Skill } from "../../types/portfolio.js";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
+import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 
 export const AdminSkillsPage = () => {
   const [skillsData, setSkillsData] = useState<Record<string, Skill[]>>({});
@@ -15,7 +22,6 @@ export const AdminSkillsPage = () => {
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Form states
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Frontend");
   const [proficiency, setProficiency] = useState(90);
@@ -62,13 +68,16 @@ export const AdminSkillsPage = () => {
     setUploadingImage(true);
     setError(null);
     try {
-      const res = await uploadImage(file);
-      setIcon(res.url);
+      const res = await uploadImage(file, "portfolio/skills");
+      if (res && (res.url || res.secureUrl)) {
+        setIcon(res.url || res.secureUrl);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to upload skill icon to Cloudinary");
     } finally {
       setUploadingImage(false);
     }
+
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -108,7 +117,6 @@ export const AdminSkillsPage = () => {
 
   return (
     <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border-subtle">
         <div>
           <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider block mb-1">
@@ -121,13 +129,13 @@ export const AdminSkillsPage = () => {
 
         <button
           onClick={openCreateModal}
-          className="px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-cyan-300 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.15)]"
+          className="px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-cyan-300 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.15)] cursor-pointer"
         >
-          <span>+ Add New Skill</span>
+          <AddRoundedIcon sx={{ fontSize: 18 }} />
+          <span>Add New Skill</span>
         </button>
       </div>
 
-      {/* Categorized Skills Grid */}
       <div className="space-y-8">
         {loading ? (
           <div className="glass-card p-12 text-center text-xs font-mono text-muted rounded-3xl">
@@ -138,7 +146,7 @@ export const AdminSkillsPage = () => {
             <div key={cat} className="glass-card p-6 sm:p-8 rounded-3xl">
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-white/[0.06]">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                  <CodeRoundedIcon sx={{ fontSize: 18, color: "#38bdf8" }} />
                   <h2 className="text-lg font-display font-bold text-white">{cat}</h2>
                 </div>
                 <span className="text-xs font-mono text-muted">{skills.length} skills</span>
@@ -151,7 +159,6 @@ export const AdminSkillsPage = () => {
                     className="p-3.5 rounded-xl bg-surface-100/70 border border-white/[0.06] flex items-center justify-between group hover:border-cyan-400/40"
                   >
                     <div className="flex items-center gap-3">
-                      {/* Icon / Image thumbnail */}
                       {s.icon ? (
                         <img
                           src={s.icon}
@@ -159,8 +166,8 @@ export const AdminSkillsPage = () => {
                           className="w-8 h-8 rounded-lg object-contain bg-white/[0.04] p-1 border border-white/[0.08]"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-300 font-mono text-xs font-bold">
-                          {s.name.slice(0, 2).toUpperCase()}
+                        <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-300">
+                          <AutoAwesomeRoundedIcon sx={{ fontSize: 16 }} />
                         </div>
                       )}
 
@@ -175,17 +182,17 @@ export const AdminSkillsPage = () => {
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100">
                       <button
                         onClick={() => openEditModal(s)}
-                        className="p-1.5 rounded-md hover:bg-white/[0.08] text-muted hover:text-white text-xs"
+                        className="p-1.5 rounded-md hover:bg-white/[0.08] text-muted hover:text-white text-xs cursor-pointer"
                         title="Edit Skill"
                       >
-                        ✎
+                        <EditRoundedIcon sx={{ fontSize: 16 }} />
                       </button>
                       <button
                         onClick={() => handleDelete(s._id)}
-                        className="p-1.5 rounded-md hover:bg-rose-500/20 text-muted hover:text-rose-300 text-xs"
+                        className="p-1.5 rounded-md hover:bg-rose-500/20 text-muted hover:text-rose-300 text-xs cursor-pointer"
                         title="Delete Skill"
                       >
-                        ✕
+                        <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
                       </button>
                     </div>
                   </div>
@@ -196,19 +203,19 @@ export const AdminSkillsPage = () => {
         )}
       </div>
 
-      {/* Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
           <div className="glass-card max-w-md w-full p-6 sm:p-8 rounded-3xl border border-white/[0.1] shadow-2xl my-8">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/[0.08]">
-              <h2 className="text-xl font-display font-bold text-white">
-                {editingSkill ? "Edit Skill & Icon" : "Add Technical Skill"}
+              <h2 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                <CodeRoundedIcon sx={{ fontSize: 20, color: "#38bdf8" }} />
+                <span>{editingSkill ? "Edit Skill & Icon" : "Add Technical Skill"}</span>
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-muted hover:text-white text-sm"
+                className="text-muted hover:text-white p-1 rounded-lg hover:bg-white/[0.05] cursor-pointer"
               >
-                ✕
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
               </button>
             </div>
 
@@ -246,20 +253,22 @@ export const AdminSkillsPage = () => {
                 </select>
               </div>
 
-              {/* Cloudinary Icon / Image Upload */}
               <div>
                 <label className="block text-muted mb-1">Skill Icon / Logo Image</label>
                 <div className="flex items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleIconFileUpload}
-                    className="text-xs text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-white/[0.08] file:text-white hover:file:bg-white/[0.15]"
-                  />
+                  <label className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.08] cursor-pointer flex items-center gap-2">
+                    <CloudUploadRoundedIcon sx={{ fontSize: 16 }} />
+                    <span>Upload Icon</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleIconFileUpload}
+                      className="hidden"
+                    />
+                  </label>
                   {uploadingImage && <span className="text-cyan-400">Uploading...</span>}
                 </div>
 
-                {/* Direct URL input fallback */}
                 <div className="mt-2">
                   <input
                     type="url"
@@ -270,7 +279,6 @@ export const AdminSkillsPage = () => {
                   />
                 </div>
 
-                {/* Preview */}
                 {icon && (
                   <div className="mt-3 flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
                     <img
@@ -291,7 +299,7 @@ export const AdminSkillsPage = () => {
                   max="100"
                   value={proficiency}
                   onChange={(e) => setProficiency(Number(e.target.value))}
-                  className="w-full accent-cyan-400"
+                  className="w-full accent-cyan-400 cursor-pointer"
                 />
               </div>
 
@@ -299,13 +307,13 @@ export const AdminSkillsPage = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-surface-100 hover:bg-surface-50 text-white text-xs border border-white/[0.08]"
+                  className="px-4 py-2 rounded-xl bg-surface-100 hover:bg-surface-50 text-white text-xs border border-white/[0.08] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-cyan-300 transition-colors"
+                  className="px-6 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-cyan-300 transition-colors cursor-pointer"
                 >
                   {editingSkill ? "Update Skill" : "Save Skill"}
                 </button>

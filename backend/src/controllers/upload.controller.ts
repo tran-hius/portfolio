@@ -3,9 +3,7 @@ import { CloudinaryService } from "../services/cloudinary.service.js";
 import { BadRequestError } from "../errors/app.error.js";
 
 export const UploadController = {
-  /**
-   * Upload an image to Cloudinary (base64 data URI or public image URL)
-   */
+  
   async upload(req: Request, res: Response, next: NextFunction) {
     try {
       const file = req.body.file || req.body.image;
@@ -23,16 +21,17 @@ export const UploadController = {
       return res.status(201).json({
         success: true,
         message: "Image uploaded successfully",
-        data: result,
+        data: {
+          ...result,
+          url: result.secureUrl,
+        },
       });
+
     } catch (error) {
       next(error);
     }
   },
 
-  /**
-   * Delete an image from Cloudinary by publicId
-   */
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
       const publicId = req.body.publicId || req.query.publicId;

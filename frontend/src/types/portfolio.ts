@@ -39,9 +39,11 @@ export interface Education {
   fieldOfStudy?: string | null;
   startDate: string | Date;
   endDate?: string | Date | null;
+  isCurrent?: boolean;
   grade?: string | null;
   description?: string | null;
 }
+
 
 export interface Certificate {
   _id: string;
@@ -56,13 +58,10 @@ export interface Certificate {
 
 export interface SystemMetrics {
   server: {
+    startTime: string;
     uptimeSeconds: number;
     nodeVersion: string;
-    platform: string;
-    memory?: {
-      heapUsedMb: number;
-      totalRssMb: number;
-    };
+    platform?: string;
   };
   health: string;
   database: {
@@ -70,12 +69,23 @@ export interface SystemMetrics {
     latencyMs: number | null;
     name: string;
   };
+  memory: {
+    rssMb: number;
+    heapTotalMb: number;
+    heapUsedMb: number;
+    externalMb: number;
+  };
   traffic: {
     totalRequests: number;
+    status2xx?: number;
+    status3xx?: number;
+    status4xx?: number;
+    status5xx?: number;
     avgLatencyMs: number;
     errorRatePercent: number;
   };
 }
+
 
 export interface VisitorStats {
   activeVisitors: number;

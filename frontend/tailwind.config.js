@@ -5,25 +5,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "#050507",
+        background: "var(--bg-color)",
         surface: {
-          50: "#14141c",
-          100: "#0e0e14",
-          200: "#09090d",
-          300: "#050507",
+          50: "var(--surface-50)",
+          100: "var(--surface-100)",
+          200: "var(--surface-200)",
+          300: "var(--surface-300)",
         },
         border: {
-          subtle: "rgba(255, 255, 255, 0.07)",
-          highlight: "rgba(255, 255, 255, 0.15)",
+          subtle: "var(--border-subtle)",
+          highlight: "var(--border-highlight)",
         },
         accent: {
-          DEFAULT: "#38bdf8", // Ice Sky / Cyan
-          glow: "rgba(56, 189, 248, 0.15)",
-          hover: "#0ea5e9",
+          DEFAULT: "var(--accent-color)",
+          glow: "var(--accent-glow)",
+          hover: "#0284c7",
         },
         muted: {
-          DEFAULT: "#8f909e",
-          foreground: "#a1a1aa",
+          DEFAULT: "var(--text-muted)",
+          foreground: "var(--text-muted-foreground)",
         },
       },
       fontFamily: {
@@ -39,4 +39,3 @@ export default {
   },
   plugins: [],
 };
-

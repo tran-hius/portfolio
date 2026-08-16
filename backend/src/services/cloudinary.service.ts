@@ -12,9 +12,7 @@ export interface UploadImageResult {
 }
 
 export const CloudinaryService = {
-  /**
-   * Generate SHA-1 signature for Cloudinary authentication
-   */
+  
   generateSignature(params: Record<string, string | number>): string {
     const sortedKeys = Object.keys(params).sort();
     const stringToSign =
@@ -24,9 +22,6 @@ export const CloudinaryService = {
     return crypto.createHash("sha1").update(stringToSign).digest("hex");
   },
 
-  /**
-   * Upload image to Cloudinary (supports base64, data URI, or public image URL)
-   */
   async uploadImage(
     file: string,
     options: {
@@ -106,9 +101,6 @@ export const CloudinaryService = {
     }
   },
 
-  /**
-   * Delete an image from Cloudinary by public_id
-   */
   async deleteImage(publicId: string): Promise<{ result: string }> {
     if (!cloudinaryConfig.isConfigured) {
       throw new InternalServerError(

@@ -13,9 +13,7 @@ interface ActiveClient {
 const activeClients = new Map<Response, ActiveClient>();
 
 export const AnalyticsService = {
-  /**
-   * Log an incoming visitor access to database
-   */
+  
   async logVisit(data: CreateVisitorDTO) {
     try {
       await visitorRepository.create(data);
@@ -24,9 +22,6 @@ export const AnalyticsService = {
     }
   },
 
-  /**
-   * Register a new Realtime SSE Client Connection
-   */
   addClient(res: Response, ip: string) {
     activeClients.set(res, {
       res,
@@ -34,25 +29,17 @@ export const AnalyticsService = {
       connectedAt: new Date(),
     });
 
-    // Send immediate initial count to this client
     const currentCount = this.getActiveVisitorCount();
     res.write(`data: ${JSON.stringify({ activeVisitors: currentCount })}\n\n`);
 
-    // Broadcast count update to all other connected clients
     this.broadcastActiveCount();
   },
 
-  /**
-   * Remove a Realtime SSE Client Connection
-   */
   removeClient(res: Response) {
     activeClients.delete(res);
     this.broadcastActiveCount();
   },
 
-  /**
-   * Calculate current number of active visitors (distinct IPs or total streams)
-   */
   getActiveVisitorCount(): number {
     const uniqueIPs = new Set<string>();
     for (const client of activeClients.values()) {
@@ -61,9 +48,6 @@ export const AnalyticsService = {
     return uniqueIPs.size;
   },
 
-  /**
-   * Broadcast current active visitor count to all open SSE connections
-   */
   broadcastActiveCount() {
     const count = this.getActiveVisitorCount();
     const payload = `data: ${JSON.stringify({ activeVisitors: count })}\n\n`;
@@ -72,15 +56,12 @@ export const AnalyticsService = {
       try {
         client.res.write(payload);
       } catch (err) {
-        // If writing fails, remove disconnected client
+        
         activeClients.delete(client.res);
       }
     }
   },
 
-  /**
-   * Retrieve aggregate visitor statistics
-   */
   async getStats() {
     const [totalVisits, totalUniqueVisitors, uniqueVisitorsToday] =
       await Promise.all([
@@ -97,9 +78,6 @@ export const AnalyticsService = {
     };
   },
 
-  /**
-   * Retrieve paginated visitor logs for admin dashboard
-   */
   async getLogs(options: {
     page?: number | undefined;
     limit?: number | undefined;

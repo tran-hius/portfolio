@@ -1,7 +1,9 @@
 export interface UserResponseDTO {
   _id: string;
+  id?: string;
   firstName?: string;
   lastName?: string;
+  name?: string;
   birthDay?: Date | string;
   nation?: string;
   email: string;
