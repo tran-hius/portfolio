@@ -225,3 +225,231 @@ export const fetchSystemMetrics = async (): Promise<SystemMetrics | null> => {
     return null;
   }
 };
+
+/* =========================================================================
+   AUTH & ADMIN MANAGEMENT API
+   ========================================================================= */
+
+const TOKEN_KEY = "portfolio_admin_token";
+const USER_KEY = "portfolio_admin_user";
+
+export const getStoredToken = (): string | null => {
+  return localStorage.getItem(TOKEN_KEY);
+};
+
+export const setStoredAuth = (token: string, user: any) => {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+};
+
+export const clearStoredAuth = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+};
+
+export const getStoredUser = () => {
+  try {
+    const str = localStorage.getItem(USER_KEY);
+    return str ? JSON.parse(str) : null;
+  } catch {
+    return null;
+  }
+};
+
+const authFetch = async (endpoint: string, options: RequestInit = {}) => {
+  const token = getStoredToken();
+  const headers = new Headers(options.headers || {});
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  const json = await res.json();
+  if (!res.ok) {
+    throw new Error(json.message || `Request failed with status ${res.status}`);
+  }
+  return json;
+};
+
+// Admin Auth
+export const loginAdmin = async (email: string, password: string) => {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Login failed");
+  if (json.data?.accessToken) {
+    setStoredAuth(json.data.accessToken, json.data.user);
+  }
+  return json.data;
+};
+
+export const registerAdmin = async (email: string, password: string, name: string) => {
+  const res = await fetch(`${API_BASE}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, name, role: "admin" }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Registration failed");
+  if (json.data?.accessToken) {
+    setStoredAuth(json.data.accessToken, json.data.user);
+  }
+  return json.data;
+};
+
+// Projects CRUD
+export const createProject = async (data: Partial<Project>) => {
+  const res = await authFetch("/projects", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const updateProject = async (id: string, data: Partial<Project>) => {
+  const res = await authFetch(`/projects/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const deleteProject = async (id: string) => {
+  const res = await authFetch(`/projects/${id}`, {
+    method: "DELETE",
+  });
+  return res.data;
+};
+
+// Skills CRUD
+export const createSkill = async (data: Partial<Skill>) => {
+  const res = await authFetch("/skills", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const updateSkill = async (id: string, data: Partial<Skill>) => {
+  const res = await authFetch(`/skills/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const deleteSkill = async (id: string) => {
+  const res = await authFetch(`/skills/${id}`, {
+    method: "DELETE",
+  });
+  return res.data;
+};
+
+// Experience CRUD
+export const createExperience = async (data: Partial<Experience>) => {
+  const res = await authFetch("/experiences", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const updateExperience = async (id: string, data: Partial<Experience>) => {
+  const res = await authFetch(`/experiences/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const deleteExperience = async (id: string) => {
+  const res = await authFetch(`/experiences/${id}`, {
+    method: "DELETE",
+  });
+  return res.data;
+};
+
+// Education CRUD
+export const createEducation = async (data: Partial<Education>) => {
+  const res = await authFetch("/education", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const updateEducation = async (id: string, data: Partial<Education>) => {
+  const res = await authFetch(`/education/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const deleteEducation = async (id: string) => {
+  const res = await authFetch(`/education/${id}`, {
+    method: "DELETE",
+  });
+  return res.data;
+};
+
+// Certificate CRUD
+export const createCertificate = async (data: Partial<Certificate>) => {
+  const res = await authFetch("/certificates", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const updateCertificate = async (id: string, data: Partial<Certificate>) => {
+  const res = await authFetch(`/certificates/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return res.data;
+};
+
+export const deleteCertificate = async (id: string) => {
+  const res = await authFetch(`/certificates/${id}`, {
+    method: "DELETE",
+  });
+  return res.data;
+};
+
+// Cloudinary Upload
+export const uploadImage = async (file: File): Promise<{ url: string; publicId: string }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await authFetch("/upload", {
+    method: "POST",
+    body: formData,
+  });
+  return res.data;
+};
+
+// Visitor Logs
+export const fetchVisitorLogs = async (page = 1, limit = 20) => {
+  try {
+    const res = await authFetch(`/analytics/visitors?page=${page}&limit=${limit}`);
+    return res.data;
+  } catch {
+    return {
+      visitors: [],
+      pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
+      stats: { totalDistinctIPs: 1, todayUniqueIPs: 1 },
+    };
+  }
+};
+

@@ -1,0 +1,180 @@
+import { useState, useEffect } from "react";
+import {
+  fetchVisitorLogs,
+  subscribeToRealtimeVisitors,
+} from "../../services/api.js";
+
+export const AdminVisitorsPage = () => {
+  const [visitors, setVisitors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [onlineCount, setOnlineCount] = useState<number>(1);
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [stats, setStats] = useState<{ totalDistinctIPs: number; todayUniqueIPs: number }>({
+    totalDistinctIPs: 1,
+    todayUniqueIPs: 1,
+  });
+
+  const loadData = async (targetPage: number) => {
+    setLoading(true);
+    const data = await fetchVisitorLogs(targetPage, 15);
+    if (data?.visitors) setVisitors(data.visitors);
+    if (data?.pagination) {
+      setPage(data.pagination.page);
+      setTotalPages(data.pagination.totalPages || 1);
+    }
+    if (data?.stats) setStats(data.stats);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData(page);
+
+    const unsubscribe = subscribeToRealtimeVisitors((count) => {
+      setOnlineCount(count);
+    });
+
+    return () => unsubscribe();
+  }, [page]);
+
+  return (
+    <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border-subtle">
+        <div>
+          <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider block mb-1">
+            CMS // Realtime Observability
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
+            Visitor IP Intelligence & Telemetry
+          </h1>
+        </div>
+
+        <button
+          onClick={() => loadData(page)}
+          className="px-4 py-2 rounded-xl bg-surface-100 hover:bg-surface-50 text-white text-xs font-mono border border-border-subtle transition-colors flex items-center gap-1.5"
+        >
+          <span>↻ Refresh Logs</span>
+        </button>
+      </div>
+
+      {/* Analytics KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div className="glass-card p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-mono text-muted uppercase">Connected Live Now</span>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            </div>
+            <span className="text-3xl sm:text-4xl font-display font-bold text-emerald-400 block">
+              {onlineCount}
+            </span>
+          </div>
+          <p className="text-xs font-mono text-muted mt-4 border-t border-white/[0.06] pt-3">
+            Active SSE client connections
+          </p>
+        </div>
+
+        <div className="glass-card p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-mono text-muted uppercase block mb-2">
+              Unique Visitors Today
+            </span>
+            <span className="text-3xl sm:text-4xl font-display font-bold text-cyan-300 block">
+              {stats.todayUniqueIPs}
+            </span>
+          </div>
+          <p className="text-xs font-mono text-muted mt-4 border-t border-white/[0.06] pt-3">
+            Deduplicated daily IP count
+          </p>
+        </div>
+
+        <div className="glass-card p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-mono text-muted uppercase block mb-2">
+              Total Distinct IPs (All-Time)
+            </span>
+            <span className="text-3xl sm:text-4xl font-display font-bold text-indigo-300 block">
+              {stats.totalDistinctIPs}
+            </span>
+          </div>
+          <p className="text-xs font-mono text-muted mt-4 border-t border-white/[0.06] pt-3">
+            Indexed in MongoDB
+          </p>
+        </div>
+      </div>
+
+      {/* Visitor Logs Table */}
+      <div className="glass-card p-6 sm:p-8 rounded-3xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs font-mono">
+            <thead>
+              <tr className="border-b border-white/[0.08] text-muted">
+                <th className="pb-3 font-medium">IP Address</th>
+                <th className="pb-3 font-medium">Request Path</th>
+                <th className="pb-3 font-medium">User Agent Platform</th>
+                <th className="pb-3 font-medium text-right">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.04]">
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-muted">
+                    Fetching IP telemetry records...
+                  </td>
+                </tr>
+              ) : visitors.length > 0 ? (
+                visitors.map((v, i) => (
+                  <tr key={v._id || i} className="hover:bg-white/[0.02]">
+                    <td className="py-4 text-cyan-300 font-medium">{v.ip}</td>
+                    <td className="py-4 text-white">{v.path || "/"}</td>
+                    <td className="py-4 text-muted max-w-sm truncate">
+                      {v.userAgent || "Unknown Browser"}
+                    </td>
+                    <td className="py-4 text-muted text-right">
+                      {v.visitedAt ? new Date(v.visitedAt).toLocaleString() : "Recent"}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-muted">
+                    No visitor logs recorded.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-6 border-t border-white/[0.06] text-xs font-mono text-muted mt-4">
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage(page - 1)}
+                className="px-3 py-1 rounded-lg bg-surface-100 hover:bg-surface-50 text-white disabled:opacity-30 border border-white/[0.06]"
+              >
+                Previous
+              </button>
+              <button
+                disabled={page >= totalPages}
+                onClick={() => setPage(page + 1)}
+                className="px-3 py-1 rounded-lg bg-surface-100 hover:bg-surface-50 text-white disabled:opacity-30 border border-white/[0.06]"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

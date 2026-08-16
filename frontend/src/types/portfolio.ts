@@ -3,6 +3,7 @@ export interface Project {
   title: string;
   description: string;
   thumbnail?: string | null;
+  imageUrl?: string | null;
   technologies: string[];
   githubUrl?: string | null;
   liveUrl?: string | null;
@@ -58,6 +59,10 @@ export interface SystemMetrics {
     uptimeSeconds: number;
     nodeVersion: string;
     platform: string;
+    memory?: {
+      heapUsedMb: number;
+      totalRssMb: number;
+    };
   };
   health: string;
   database: {
