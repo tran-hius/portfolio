@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
+import { useConfirm } from "../context/ConfirmContext.js";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import RocketLaunchRoundedIcon from "@mui/icons-material/RocketLaunchRounded";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
@@ -19,7 +20,6 @@ import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
-import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 
 export const AdminLayout = () => {
   const { user, logout, updateProfile } = useAuth();
@@ -28,9 +28,8 @@ export const AdminLayout = () => {
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const confirm = useConfirm();
 
   // Profile Edit State
   const [firstName, setFirstName] = useState("");
@@ -54,20 +53,23 @@ export const AdminLayout = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const openLogoutConfirm = () => {
+  const openLogoutConfirm = async () => {
     setIsDropdownOpen(false);
-    setIsLogoutConfirmOpen(true);
-  };
+    const ok = await confirm({
+      title: "Xác Nhận Đăng Xuất",
+      itemType: "Phiên làm việc",
+      itemName: user?.email || "Admin Session",
+      message: "Bạn có chắc chắn muốn kết thúc phiên đăng nhập quản trị hiện tại?",
+      confirmText: "Đăng Xuất",
+      cancelText: "Ở Lại",
+      variant: "warning",
+      icon: "logout",
+    });
 
-  const handleConfirmLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await logout();
-      setIsLogoutConfirmOpen(false);
-      navigate("/admin/login", { replace: true });
-    } finally {
-      setIsLoggingOut(false);
-    }
+    if (!ok) return;
+
+    await logout();
+    navigate("/admin/login", { replace: true });
   };
 
   const openProfileModal = () => {
@@ -303,60 +305,6 @@ export const AdminLayout = () => {
           <Outlet />
         </main>
       </div>
-
-      {/* Confirmation Modal for Sign Out */}
-      {isLogoutConfirmOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="glass-card max-w-md w-full p-6 sm:p-8 rounded-3xl border border-white/[0.12] shadow-2xl my-8">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.08]">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                  <LogoutRoundedIcon sx={{ fontSize: 20 }} />
-                </div>
-                <h3 className="text-lg font-display font-bold text-white">
-                  Confirm Sign Out
-                </h3>
-              </div>
-
-              <button
-                onClick={() => setIsLogoutConfirmOpen(false)}
-                className="text-muted hover:text-white p-1 rounded-lg hover:bg-white/[0.05] cursor-pointer"
-              >
-                <CloseRoundedIcon sx={{ fontSize: 20 }} />
-              </button>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-start gap-3">
-                <WarningAmberRoundedIcon sx={{ fontSize: 20, color: "#f59e0b" }} className="shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-300 leading-relaxed font-sans">
-                  Are you sure you want to end your administrative session? You will need to enter your master credentials to access the portfolio CMS console again.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
-              <button
-                type="button"
-                disabled={isLoggingOut}
-                onClick={() => setIsLogoutConfirmOpen(false)}
-                className="px-4 py-2.5 rounded-xl bg-surface-100 hover:bg-surface-50 text-white text-xs font-mono border border-white/[0.08] cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isLoggingOut}
-                onClick={handleConfirmLogout}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-semibold text-xs font-mono shadow-[0_0_20px_rgba(244,63,94,0.3)] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                <LogoutRoundedIcon sx={{ fontSize: 16 }} />
-                <span>{isLoggingOut ? "Signing out..." : "Yes, Sign Out"}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Edit Profile & Password Modal */}
       {isProfileModalOpen && (

@@ -13,7 +13,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
-import { ConfirmDeleteModal } from "../../components/ConfirmDeleteModal.js";
+import { useConfirm } from "../../context/ConfirmContext.js";
 
 const formatDateForInput = (val?: string | Date | null): string => {
   if (!val) return "";
@@ -107,21 +107,27 @@ export const AdminCertificatesPage = () => {
     }
   };
 
-  const [deletingCert, setDeletingCert] = useState<Certificate | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const confirm = useConfirm();
 
-  const confirmDelete = async () => {
-    if (!deletingCert?._id) return;
-    setIsDeleting(true);
+  const handleDelete = async (cert: Certificate) => {
+    if (!cert?._id) return;
+    const ok = await confirm({
+      title: "Xác Nhận Xóa Chứng Chỉ",
+      itemType: "Chứng chỉ",
+      itemName: cert.title,
+      message: `Bạn có chắc chắn muốn xóa chứng chỉ "${cert.title}" cấp bởi ${cert.issuer}?`,
+      confirmText: "Xóa Chứng Chỉ",
+      variant: "danger",
+    });
+
+    if (!ok) return;
+
     try {
-      await deleteCertificate(deletingCert._id);
-      setDeletingCert(null);
+      await deleteCertificate(cert._id);
       loadData();
     } catch (err: any) {
       console.error("Delete error:", err);
       setError(err.message || "Failed to delete certificate");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -203,7 +209,7 @@ export const AdminCertificatesPage = () => {
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={() => setDeletingCert(cert)}
+                        onClick={() => handleDelete(cert)}
                         className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs border border-rose-500/20 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
@@ -325,17 +331,6 @@ export const AdminCertificatesPage = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmDeleteModal
-        isOpen={Boolean(deletingCert)}
-        title="Xác Nhận Xóa Chứng Chỉ"
-        itemName={deletingCert?.title}
-        itemType="Chứng chỉ"
-        isDeleting={isDeleting}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeletingCert(null)}
-      />
     </div>
   );
 };

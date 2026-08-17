@@ -13,7 +13,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
 import GradeRoundedIcon from "@mui/icons-material/GradeRounded";
-import { ConfirmDeleteModal } from "../../components/ConfirmDeleteModal.js";
+import { useConfirm } from "../../context/ConfirmContext.js";
 
 const formatDateForInput = (val?: string | Date | null): string => {
   if (!val) return "";
@@ -119,21 +119,27 @@ export const AdminEducationPage = () => {
     }
   };
 
-  const [deletingEdu, setDeletingEdu] = useState<Education | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const confirm = useConfirm();
 
-  const confirmDelete = async () => {
-    if (!deletingEdu?._id) return;
-    setIsDeleting(true);
+  const handleDelete = async (edu: Education) => {
+    if (!edu?._id) return;
+    const ok = await confirm({
+      title: "Xác Nhận Xóa Học Vấn",
+      itemType: "Học vấn",
+      itemName: `${edu.degree} - ${edu.institution}`,
+      message: "Bạn có chắc chắn muốn xóa bản ghi học vấn này khỏi hệ thống?",
+      confirmText: "Xóa Học Vấn",
+      variant: "danger",
+    });
+
+    if (!ok) return;
+
     try {
-      await deleteEducation(deletingEdu._id);
-      setDeletingEdu(null);
+      await deleteEducation(edu._id);
       loadData();
     } catch (err: any) {
       console.error("Delete error:", err);
       setError(err.message || "Failed to delete education record");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -210,7 +216,7 @@ export const AdminEducationPage = () => {
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={() => setDeletingEdu(edu)}
+                        onClick={() => handleDelete(edu)}
                         className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs border border-rose-500/20 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
@@ -369,17 +375,6 @@ export const AdminEducationPage = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmDeleteModal
-        isOpen={Boolean(deletingEdu)}
-        title="Xác Nhận Xóa Học Vấn"
-        itemName={deletingEdu ? `${deletingEdu.degree} - ${deletingEdu.institution}` : undefined}
-        itemType="Học vấn"
-        isDeleting={isDeleting}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeletingEdu(null)}
-      />
     </div>
   );
 };

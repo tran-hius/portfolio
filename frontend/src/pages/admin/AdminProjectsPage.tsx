@@ -16,7 +16,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import FolderSpecialRoundedIcon from "@mui/icons-material/FolderSpecialRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import { ConfirmDeleteModal } from "../../components/ConfirmDeleteModal.js";
+import { useConfirm } from "../../context/ConfirmContext.js";
 
 export const AdminProjectsPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -130,21 +130,27 @@ export const AdminProjectsPage = () => {
     }
   };
 
-  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const confirm = useConfirm();
 
-  const confirmDelete = async () => {
-    if (!deletingProject) return;
-    setIsDeleting(true);
+  const handleDelete = async (project: Project) => {
+    if (!project?._id) return;
+    const ok = await confirm({
+      title: "Xác Nhận Xóa Dự Án",
+      itemType: "Dự án",
+      itemName: project.title,
+      message: "Bạn có chắc chắn muốn xóa vĩnh viễn dự án này? Thao tác này sẽ gỡ bỏ dữ liệu khỏi hệ thống MongoDB và trang chủ ngay lập tức.",
+      confirmText: "Xóa Dự Án",
+      variant: "danger",
+    });
+
+    if (!ok) return;
+
     try {
-      await deleteProject(deletingProject._id);
-      setDeletingProject(null);
+      await deleteProject(project._id);
       loadProjects();
     } catch (err: any) {
       console.error("Delete error:", err);
       setError(err.message || "Failed to delete project");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -266,7 +272,7 @@ export const AdminProjectsPage = () => {
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={() => setDeletingProject(p)}
+                        onClick={() => handleDelete(p)}
                         className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs border border-rose-500/20 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
@@ -461,17 +467,6 @@ export const AdminProjectsPage = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmDeleteModal
-        isOpen={Boolean(deletingProject)}
-        title="Xác Nhận Xóa Dự Án"
-        itemName={deletingProject?.title}
-        itemType="Dự án"
-        isDeleting={isDeleting}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeletingProject(null)}
-      />
     </div>
   );
 };

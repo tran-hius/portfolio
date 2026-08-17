@@ -15,7 +15,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded";
-import { ConfirmDeleteModal } from "../../components/ConfirmDeleteModal.js";
+import { useConfirm } from "../../context/ConfirmContext.js";
 
 const PRESET_COLORS = [
   { label: "React Blue", hex: "#61DAFB" },
@@ -128,21 +128,27 @@ export const AdminSkillsPage = () => {
     }
   };
 
-  const [deletingSkill, setDeletingSkill] = useState<Skill | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const confirm = useConfirm();
 
-  const confirmDelete = async () => {
-    if (!deletingSkill?._id) return;
-    setIsDeleting(true);
+  const handleDelete = async (skill: Skill) => {
+    if (!skill?._id) return;
+    const ok = await confirm({
+      title: "Xác Nhận Xóa Kỹ Năng",
+      itemType: "Kỹ năng",
+      itemName: skill.name,
+      message: `Bạn có chắc chắn muốn xóa kỹ năng "${skill.name}"? Dữ liệu này sẽ không còn hiển thị trên portfolio.`,
+      confirmText: "Xóa Kỹ Năng",
+      variant: "danger",
+    });
+
+    if (!ok) return;
+
     try {
-      await deleteSkill(deletingSkill._id);
-      setDeletingSkill(null);
+      await deleteSkill(skill._id);
       loadSkills();
     } catch (err: any) {
       console.error("Delete error:", err);
       setError(err.message || "Failed to delete skill");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -259,7 +265,7 @@ export const AdminSkillsPage = () => {
                           <EditRoundedIcon sx={{ fontSize: 16 }} />
                         </button>
                         <button
-                          onClick={() => setDeletingSkill(s)}
+                          onClick={() => handleDelete(s)}
                           className="p-1.5 rounded-md hover:bg-rose-500/20 text-muted hover:text-rose-300 text-xs cursor-pointer"
                           title="Delete Skill"
                         >
@@ -453,17 +459,6 @@ export const AdminSkillsPage = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmDeleteModal
-        isOpen={Boolean(deletingSkill)}
-        title="Xác Nhận Xóa Kỹ Năng"
-        itemName={deletingSkill?.name}
-        itemType="Kỹ năng"
-        isDeleting={isDeleting}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeletingSkill(null)}
-      />
     </div>
   );
 };
