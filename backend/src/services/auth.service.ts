@@ -7,6 +7,7 @@ import tokenRepository from "../repositories/token.repository.js";
 import type { LoginDTO } from "../dtos/login-dto.js";
 import type { LoginResponseDTO } from "../dtos/login-response-dto.js";
 import { UnauthorizedError, BadRequestError } from "../errors/app.error.js";
+import { envConfig } from "../config/env.config.js";
 import { Logger } from "../utils/logger.util.js";
 
 export const AuthService = {
@@ -14,8 +15,8 @@ export const AuthService = {
     try {
       const count = await userRepository.count({});
       if (count === 0) {
-        const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-        const rawPassword = process.env.ADMIN_PASSWORD;
+        const email = envConfig.ADMIN_EMAIL?.trim().toLowerCase();
+        const rawPassword = envConfig.ADMIN_PASSWORD;
 
         if (!email || !rawPassword) {
           Logger.warn(

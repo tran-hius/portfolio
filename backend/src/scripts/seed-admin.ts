@@ -1,20 +1,17 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import mongoose from "mongoose";
+import { envConfig } from "../config/env.config.js";
 import { HashUtil } from "../utils/hash.util.js";
 import User from "../schema/user.schema.js";
 import { Logger } from "../utils/logger.util.js";
 
 const seedAdmin = async () => {
   try {
-    const mongoUri =
-      process.env.MONGO_URI || "mongodb://127.0.0.1:27017/portfolio";
+    const mongoUri = envConfig.MONGO_URI;
     Logger.info(`Connecting to MongoDB at: ${mongoUri}`);
     await mongoose.connect(mongoUri);
 
-    const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-    const rawPassword = process.env.ADMIN_PASSWORD;
+    const email = envConfig.ADMIN_EMAIL?.trim().toLowerCase();
+    const rawPassword = envConfig.ADMIN_PASSWORD;
 
     if (!email || !rawPassword) {
       Logger.error(

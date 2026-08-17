@@ -209,7 +209,7 @@ export const SocketService = {
     for (const client of activeSockets.values()) {
       uniqueIPs.add(client.ip);
     }
-    return Math.max(1, uniqueIPs.size);
+    return uniqueIPs.size;
   },
 
   broadcastNewLog(log: IVisitor | any) {

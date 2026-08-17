@@ -3,6 +3,7 @@ import {
   visitorRepository,
   type CreateVisitorDTO,
 } from "../repositories/visitor.repository.js";
+import { Logger } from "../utils/logger.util.js";
 
 interface ActiveClient {
   res: Response;
@@ -22,7 +23,7 @@ export const AnalyticsService = {
     try {
       return await visitorRepository.create(data);
     } catch (error) {
-      console.error("Failed to log visitor:", error);
+      Logger.error("Failed to log visitor:", error);
       return null;
     }
   },
