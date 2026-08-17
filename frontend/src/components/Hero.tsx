@@ -20,15 +20,17 @@ export const Hero = () => {
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-display font-bold tracking-tight text-slate-900 dark:text-white leading-[1.05] mb-6 animate-[fadeInUp_0.8s_cubic-bezier(0.16,1,0.3,1)_0.2s_both]">
             Architecting <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 via-sky-500 to-indigo-600 dark:from-white dark:via-cyan-100 dark:to-cyan-400">
+            <span className="text-gradient-flow font-extrabold inline-block">
               High-Velocity
             </span>{" "}
             <br />
-            Digital Systems.
+            <span className="text-gradient-flow-fast inline-block">
+              Digital Systems.
+            </span>
           </h1>
 
           <p className="text-base sm:text-lg text-muted max-w-xl leading-relaxed mb-8 font-light animate-[fadeInUp_0.8s_cubic-bezier(0.16,1,0.3,1)_0.35s_both]">
-            I am <strong className="text-slate-900 dark:text-white font-semibold">Tran Hieu</strong>, a
+            I am <strong className="text-gradient-flow font-bold inline-block text-lg sm:text-xl">Tran Hieu</strong>, a
             Full-Stack Software Engineer building resilient distributed backends,
             realtime telemetry pipelines, and cinematic web interfaces with clean
             type-safe architectures.

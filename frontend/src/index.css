@@ -142,6 +142,63 @@
   animation: soft-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.text-gradient-flow {
+  background: linear-gradient(
+    90deg,
+    #0284c7 0%,
+    #06b6d4 25%,
+    #6366f1 50%,
+    #8b5cf6 75%,
+    #0284c7 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-flow 6s linear infinite;
+}
+
+.dark .text-gradient-flow {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #38bdf8 20%,
+    #818cf8 40%,
+    #34d399 60%,
+    #38bdf8 80%,
+    #ffffff 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-flow 6s linear infinite;
+}
+
+.text-gradient-flow-fast {
+  background: linear-gradient(
+    90deg,
+    #38bdf8 0%,
+    #a78bfa 30%,
+    #34d399 60%,
+    #38bdf8 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-flow 4s ease infinite;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
