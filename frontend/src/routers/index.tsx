@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainLayout from "../layout/MainLayout.js";
 import HomePage from "../pages/home/HomePage.js";
 import { ProtectedRoute } from "../components/ProtectedRoute.js";
@@ -38,7 +38,7 @@ const withLazy = (Component: ReactNode) => (
   <Suspense fallback={<RouteLoadingFallback />}>{Component}</Suspense>
 );
 
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: "/",
     element: <MainLayout />,
@@ -93,3 +93,5 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
+export const AppRouter = () => <RouterProvider router={router} />;

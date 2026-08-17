@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -18,7 +18,7 @@ export const AdminLoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
-    navigate("/admin", { replace: true });
+    return <Navigate to="/admin" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
