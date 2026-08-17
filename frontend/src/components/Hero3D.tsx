@@ -1,194 +1,392 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import * as THREE from "three";
 
-export const Hero3D = () => {
+const WORDS = [
+  "TRAN HIEU",
+  "FULL-STACK",
+  "ARCHITECT",
+  "REACT • NODE",
+  "DEV.SYSTEM",
+];
+
+// Sample high-density 3D particle coordinates from rasterized text
+const generateTextParticleTargets = (text: string, count: number): THREE.Vector3[] => {
+  const canvas = document.createElement("canvas");
+  canvas.width = 460;
+  canvas.height = 160;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return Array.from({ length: count }, () => new THREE.Vector3(0, 0, 0));
+  }
+
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Bold typography
+  ctx.font = "900 46px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
+  const validPixels: { x: number; y: number }[] = [];
+
+  const step = 3;
+  for (let y = 0; y < canvas.height; y += step) {
+    for (let x = 0; x < canvas.width; x += step) {
+      const idx = (y * canvas.width + x) * 4;
+      if (data[idx]! > 120) {
+        validPixels.push({
+          x: (x - canvas.width / 2) * 1.55,
+          y: -(y - canvas.height / 2) * 1.55,
+        });
+      }
+    }
+  }
+
+  const targets: THREE.Vector3[] = [];
+  const pixelCount = validPixels.length;
+
+  for (let i = 0; i < count; i++) {
+    if (pixelCount > 0) {
+      const p = validPixels[i % pixelCount]!;
+      const jitterZ = (Math.random() - 0.5) * 16;
+      targets.push(new THREE.Vector3(p.x, p.y, jitterZ));
+    } else {
+      // Fallback ring distribution
+      const angle = (i / count) * Math.PI * 2;
+      const r = 120 + Math.random() * 40;
+      targets.push(
+        new THREE.Vector3(
+          Math.cos(angle) * r,
+          Math.sin(angle) * r,
+          (Math.random() - 0.5) * 30
+        )
+      );
+    }
+  }
+
+  return targets;
+};
+
+export const Hero3D: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [currentWordIdx, setCurrentWordIdx] = useState(0);
+
+  const wordIdxRef = useRef(0);
+  const morphProgressRef = useRef(1);
+  const triggerBlastRef = useRef(false);
+
+  const handleNextWord = useCallback(() => {
+    wordIdxRef.current = (wordIdxRef.current + 1) % WORDS.length;
+    setCurrentWordIdx(wordIdxRef.current);
+    morphProgressRef.current = 0;
+    triggerBlastRef.current = true;
+  }, []);
 
   useEffect(() => {
+    const container = containerRef.current;
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!container || !canvas) return;
 
     let animationFrameId: number;
-    let width = (canvas.width = canvas.parentElement?.clientWidth || 500);
-    let height = (canvas.height = canvas.parentElement?.clientHeight || 500);
 
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetRotX = 0;
-    let targetRotY = 0;
-    let rotX = 0;
-    let rotY = 0;
+    const width = Math.max(container.clientWidth || 480, 320);
+    const height = Math.max(container.clientHeight || 480, 360);
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left - width / 2;
-      const y = e.clientY - rect.top - height / 2;
-      mouseX = x / (width / 2);
-      mouseY = y / (height / 2);
-      targetRotY = mouseX * 0.45;
-      targetRotX = -mouseY * 0.45;
-    };
+    // 1. Scene & Camera Setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
+    camera.position.set(0, 0, 420);
 
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-
-    const handleResize = () => {
-      if (!canvas.parentElement) return;
-      width = canvas.width = canvas.parentElement.clientWidth;
-      height = canvas.height = canvas.parentElement.clientHeight;
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    const phi = (1 + Math.sqrt(5)) / 2; 
-    const scale = Math.min(width, height) * 0.28;
-
-    const baseVertices: [number, number, number][] = [
-      [-1, phi, 0],
-      [1, phi, 0],
-      [-1, -phi, 0],
-      [1, -phi, 0],
-      [0, -1, phi],
-      [0, 1, phi],
-      [0, -1, -phi],
-      [0, 1, -phi],
-      [phi, 0, -1],
-      [phi, 0, 1],
-      [-phi, 0, -1],
-      [-phi, 0, 1],
-    ].map(([x, y, z]) => [x * scale * 0.65, y * scale * 0.65, z * scale * 0.65]);
-
-    const numParticles = 40;
-    const particles: { x: number; y: number; z: number; size: number; speed: number; angle: number; radius: number }[] = [];
-
-    for (let i = 0; i < numParticles; i++) {
-      const radius = scale * (0.85 + Math.random() * 0.6);
-      const angle = (i / numParticles) * Math.PI * 2;
-      particles.push({
-        x: Math.cos(angle) * radius,
-        y: (Math.random() - 0.5) * scale * 0.9,
-        z: Math.sin(angle) * radius,
-        size: Math.random() * 1.8 + 0.8,
-        speed: 0.004 + Math.random() * 0.006,
-        angle,
-        radius,
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance",
       });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    } catch (err) {
+      console.warn("WebGL Hero init failed:", err);
+      return;
     }
 
-    let baseAngle = 0;
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
 
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
+    // 2. Pre-generate particle targets for each word
+    const PARTICLE_COUNT = 900;
+    const wordTargets: THREE.Vector3[][] = WORDS.map((word) =>
+      generateTextParticleTargets(word, PARTICLE_COUNT)
+    );
 
-      rotX += (targetRotX - rotX) * 0.05;
-      rotY += (targetRotY - rotY) * 0.05;
-      baseAngle += 0.005;
+    // Current & Target positions array
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const velocities = new Float32Array(PARTICLE_COUNT * 3);
+    const colors = new Float32Array(PARTICLE_COUNT * 3);
+    const initialTargets = wordTargets[0]!;
 
-      const currentRotY = baseAngle + rotY;
-      const currentRotX = Math.sin(baseAngle * 0.5) * 0.15 + rotX;
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const t = initialTargets[i]!;
+      // Start slightly randomized around target
+      positions[i * 3] = t.x + (Math.random() - 0.5) * 80;
+      positions[i * 3 + 1] = t.y + (Math.random() - 0.5) * 80;
+      positions[i * 3 + 2] = t.z + (Math.random() - 0.5) * 80;
 
-      const cosY = Math.cos(currentRotY);
-      const sinY = Math.sin(currentRotY);
-      const cosX = Math.cos(currentRotX);
-      const sinX = Math.sin(currentRotX);
+      // Glowing Cyan to Electric Indigo colors
+      const mix = Math.random();
+      if (mix > 0.5) {
+        colors[i * 3] = 0.22; // R (Cyan #38bdf8)
+        colors[i * 3 + 1] = 0.74; // G
+        colors[i * 3 + 2] = 0.97; // B
+      } else if (mix > 0.2) {
+        colors[i * 3] = 0.06; // R (Emerald #10b981)
+        colors[i * 3 + 1] = 0.72;
+        colors[i * 3 + 2] = 0.5;
+      } else {
+        colors[i * 3] = 0.9; // White/Blue glow
+        colors[i * 3 + 1] = 0.95;
+        colors[i * 3 + 2] = 1.0;
+      }
+    }
 
-      const project = (x: number, y: number, z: number): [number, number, number, number] => {
-        
-        const x1 = x * cosY - z * sinY;
-        const z1 = z * cosY + x * sinY;
+    const particleGeo = new THREE.BufferGeometry();
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    particleGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
-        const y2 = y * cosX - z1 * sinX;
-        const z2 = z1 * cosX + y * sinX;
+    // Particle Material with Soft Circular Falloff
+    const particleMat = new THREE.PointsMaterial({
+      size: 3.8,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+    });
 
-        const fov = 400;
-        const depth = fov / (fov + z2 + 250);
-        const px = width / 2 + x1 * depth;
-        const py = height / 2 + y2 * depth;
+    const particleSystem = new THREE.Points(particleGeo, particleMat);
+    mainGroup.add(particleSystem);
 
-        return [px, py, z2, depth];
-      };
+    // 3. Cybernetic Holographic Rings & Framework
+    const ringGeo = new THREE.TorusGeometry(190, 1.2, 16, 80);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.25,
+      blending: THREE.AdditiveBlending,
+    });
+    const ringMesh1 = new THREE.Mesh(ringGeo, ringMat);
+    mainGroup.add(ringMesh1);
 
-      const projected = baseVertices.map(([x, y, z]) => project(x, y, z));
+    const ringGeo2 = new THREE.TorusGeometry(175, 1, 12, 60);
+    const ringMat2 = new THREE.MeshBasicMaterial({
+      color: 0x818cf8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.18,
+      blending: THREE.AdditiveBlending,
+    });
+    const ringMesh2 = new THREE.Mesh(ringGeo2, ringMat2);
+    ringMesh2.rotation.x = Math.PI / 3;
+    mainGroup.add(ringMesh2);
 
-      ctx.lineWidth = 1;
-      for (let i = 0; i < projected.length; i++) {
-        for (let j = i + 1; j < projected.length; j++) {
-          const [x1, y1, z1_orig] = baseVertices[i]!;
-          const [x2, y2, z2_orig] = baseVertices[j]!;
-          const dist3D = Math.hypot(x1 - x2, y1 - y2, z1_orig - z2_orig);
+    // 4. Holographic Vertical Laser Scanner Line
+    const laserGeo = new THREE.PlaneGeometry(360, 2);
+    const laserMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    });
+    const laserMesh = new THREE.Mesh(laserGeo, laserMat);
+    mainGroup.add(laserMesh);
 
-          if (dist3D < scale * 1.5) {
-            const [p1x, p1y, p1z] = projected[i]!;
-            const [p2x, p2y] = projected[j]!;
+    // 5. Interactive Mouse Parallax & Repulsion
+    const mouse3D = new THREE.Vector3(0, 0, 0);
+    let targetRotX = 0;
+    let targetRotY = 0;
+    let currentRotX = 0;
+    let currentRotY = 0;
 
-            const avgZ = (p1z + projected[j]![2]) / 2;
-            const alpha = Math.max(0.04, Math.min(0.35, (avgZ + scale) / (scale * 2.5)));
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-            ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
-            ctx.beginPath();
-            ctx.moveTo(p1x, p1y);
-            ctx.lineTo(p2x, p2y);
-            ctx.stroke();
-          }
+      targetRotY = x * 0.35;
+      targetRotX = -y * 0.25;
+
+      mouse3D.set(x * (rect.width / 2.2), y * (rect.height / 2.2), 0);
+    };
+
+    const onClick = () => {
+      // Trigger instant cyber blast and cycle word
+      handleNextWord();
+    };
+
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("click", onClick);
+
+    // 6. Responsive Resize Observer
+    const handleResize = () => {
+      if (!container || !renderer || !camera) return;
+      const newW = container.clientWidth || 480;
+      const newH = container.clientHeight || 480;
+      camera.aspect = newW / newH;
+      camera.updateProjectionMatrix();
+      renderer.setSize(newW, newH);
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
+    setTimeout(handleResize, 50);
+
+    // 7. Auto Morph Timer (Every 3.8 seconds)
+    const morphInterval = setInterval(() => {
+      wordIdxRef.current = (wordIdxRef.current + 1) % WORDS.length;
+      setCurrentWordIdx(wordIdxRef.current);
+      morphProgressRef.current = 0;
+    }, 3800);
+
+    // 8. Main Animation Render Loop
+    let clock = new THREE.Clock();
+
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
+      const time = clock.getElapsedTime();
+
+      // Smooth Camera / Matrix Tilt Parallax
+      currentRotX += (targetRotX - currentRotX) * 0.05;
+      currentRotY += (targetRotY - currentRotY) * 0.05;
+
+      mainGroup.rotation.y = currentRotY + Math.sin(time * 0.4) * 0.08;
+      mainGroup.rotation.x = currentRotX + Math.cos(time * 0.3) * 0.05;
+
+      // Orbit rings rotation
+      ringMesh1.rotation.z = time * 0.15;
+      ringMesh2.rotation.y = -time * 0.2;
+      ringMesh2.rotation.z = time * 0.1;
+
+      // Laser Scanner oscillation
+      laserMesh.position.y = Math.sin(time * 2.2) * 65;
+      laserMesh.rotation.z = Math.sin(time * 1.5) * 0.05;
+
+      // Particle Physics & Text Morphing
+      const posAttr = particleGeo.attributes.position as THREE.BufferAttribute;
+      const posArray = posAttr.array as Float32Array;
+
+      const activeTargetWord = wordTargets[wordIdxRef.current]!;
+
+      // Check if blast burst was triggered
+      if (triggerBlastRef.current) {
+        triggerBlastRef.current = false;
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 12 + Math.random() * 25;
+          velocities[i * 3] = Math.cos(angle) * speed;
+          velocities[i * 3 + 1] = Math.sin(angle) * speed;
+          velocities[i * 3 + 2] = (Math.random() - 0.5) * speed * 2;
         }
       }
 
-      for (let i = 0; i < projected.length; i++) {
-        const [px, py, pz, depth] = projected[i]!;
-        const radius = Math.max(1.5, 3.5 * depth);
-        const alpha = Math.max(0.2, (pz + scale) / (scale * 2));
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const i3 = i * 3;
+        const target = activeTargetWord[i]!;
 
-        const grad = ctx.createRadialGradient(px, py, 0, px, py, radius * 3);
-        grad.addColorStop(0, `rgba(56, 189, 248, ${alpha})`);
-        grad.addColorStop(1, "rgba(56, 189, 248, 0)");
+        // Current particle coords
+        let px = posArray[i3]!;
+        let py = posArray[i3 + 1]!;
+        let pz = posArray[i3 + 2]!;
 
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(px, py, radius * 3, 0, Math.PI * 2);
-        ctx.fill();
+        // 1. Spring force toward target text coordinate
+        const dx = target.x - px;
+        const dy = target.y - py;
+        const dz = target.z - pz;
 
-        ctx.fillStyle = `rgba(224, 242, 254, ${alpha + 0.2})`;
-        ctx.beginPath();
-        ctx.arc(px, py, radius, 0, Math.PI * 2);
-        ctx.fill();
+        const spring = 0.065;
+        const damping = 0.88;
+
+        velocities[i3] = (velocities[i3]! + dx * spring) * damping;
+        velocities[i3 + 1] = (velocities[i3 + 1]! + dy * spring) * damping;
+        velocities[i3 + 2] = (velocities[i3 + 2]! + dz * spring) * damping;
+
+        // 2. Mouse magnetic repulsion force
+        const mouseDistX = px - mouse3D.x;
+        const mouseDistY = py - mouse3D.y;
+        const mouseDist = Math.hypot(mouseDistX, mouseDistY);
+
+        if (mouseDist < 75 && mouseDist > 0.1) {
+          const force = (1 - mouseDist / 75) * 12;
+          velocities[i3]! += (mouseDistX / mouseDist) * force;
+          velocities[i3 + 1]! += (mouseDistY / mouseDist) * force;
+          velocities[i3 + 2]! += (Math.random() - 0.5) * force * 2;
+        }
+
+        // 3. Ambient wave float
+        const wave = Math.sin(time * 2.5 + px * 0.02) * 0.4;
+
+        // Apply velocity to position
+        posArray[i3] = px + velocities[i3]!;
+        posArray[i3 + 1] = py + velocities[i3 + 1]! + wave;
+        posArray[i3 + 2] = pz + velocities[i3 + 2]!;
       }
 
-      for (const p of particles) {
-        p.angle += p.speed;
-        const px3d = Math.cos(p.angle) * p.radius;
-        const pz3d = Math.sin(p.angle) * p.radius;
+      posAttr.needsUpdate = true;
 
-        const [projX, projY, projZ, depth] = project(px3d, p.y, pz3d);
-        const alpha = Math.max(0.1, Math.min(0.6, (projZ + scale * 1.5) / (scale * 3)));
-
-        ctx.fillStyle = `rgba(125, 211, 252, ${alpha * 0.7})`;
-        ctx.beginPath();
-        ctx.arc(projX, projY, p.size * depth, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      animationFrameId = requestAnimationFrame(render);
+      renderer.render(scene, camera);
     };
 
-    render();
+    animate();
 
+    // 9. Cleanup
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("resize", handleResize);
+      clearInterval(morphInterval);
       cancelAnimationFrame(animationFrameId);
+      resizeObserver.disconnect();
+      canvas.removeEventListener("mousemove", onMouseMove);
+      canvas.removeEventListener("click", onClick);
+      scene.clear();
+      renderer.dispose();
     };
-  }, []);
+  }, [handleNextWord]);
 
   return (
-    <div className="relative w-full h-[420px] lg:h-[540px] flex items-center justify-center pointer-events-none">
-      
-      <div className="absolute inset-0 bg-radial from-cyan-500/10 via-transparent to-transparent blur-3xl opacity-60 pointer-events-none" />
+    <div
+      ref={containerRef}
+      className="relative w-full h-[380px] sm:h-[450px] lg:h-[500px] flex items-center justify-center select-none"
+    >
+      {/* Ambient background glow */}
+      <div className="absolute inset-0 bg-radial from-cyan-500/15 via-indigo-500/5 to-transparent blur-3xl opacity-70 pointer-events-none" />
+
+      {/* 3D WebGL Canvas */}
       <canvas
         ref={canvasRef}
-        className="w-full h-full relative z-10 opacity-90 drop-shadow-[0_0_25px_rgba(56,189,248,0.2)]"
-        aria-hidden="true"
+        className="w-full h-full block cursor-pointer relative z-10 drop-shadow-[0_0_30px_rgba(56,189,248,0.25)] focus:outline-none"
+        title="Click to trigger quantum cyber blast"
       />
+
+      {/* Futuristic Cyber Overlay HUD */}
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20 pointer-events-auto">
+        <button
+          onClick={handleNextWord}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/80 border border-cyan-500/30 hover:border-cyan-400/60 backdrop-blur-md text-[11px] font-mono text-cyan-300 shadow-lg transition-all active:scale-95 group"
+        >
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+          <span className="opacity-70 group-hover:opacity-100">
+            [MODE: {WORDS[currentWordIdx]}]
+          </span>
+          <span className="text-white/40 group-hover:text-cyan-300 transition-colors">
+            • Click to Morph ⚡
+          </span>
+        </button>
+      </div>
     </div>
   );
 };

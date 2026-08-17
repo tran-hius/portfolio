@@ -54,6 +54,8 @@ export const Projects = () => {
               return (
                 <Reveal key={project._id} direction="up" delayMs={100}>
                   <div
+                    data-cursor="project"
+                    data-cursor-text="VIEW"
                     className="glass-card p-8 sm:p-10 rounded-3xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center hover:border-cyan-500/40 transition-all shadow-sm"
                   >
                     <div

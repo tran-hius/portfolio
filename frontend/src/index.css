@@ -172,3 +172,27 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Creative Developer Custom Cursor (Mix Blend Difference) */
+@media (pointer: fine) {
+  .custom-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    pointer-events: none;
+    mix-blend-mode: difference;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    will-change: transform, opacity;
+    user-select: none;
+    backface-visibility: hidden;
+    transform: translate(-50%, -50%);
+  }
+}
+
