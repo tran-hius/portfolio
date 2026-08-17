@@ -7,9 +7,10 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const COOKIE_BASE_OPTIONS = {
   secure: isProduction,
-  sameSite: (isProduction ? "strict" : "lax") as "strict" | "lax",
+  sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
   path: "/",
 };
+
 
 const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {

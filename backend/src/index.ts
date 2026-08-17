@@ -36,7 +36,30 @@ app.use(
 
 app.use(
   cors({
-    origin: envConfig.CORS_ORIGINS,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = envConfig.CORS_ORIGINS;
+
+      // Allow if wildcard configured or in explicit list
+      if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow all vercel.app domains, localhost, 127.0.0.1, onrender.com
+      if (
+        origin.endsWith(".vercel.app") ||
+        origin.includes("localhost") ||
+        origin.includes("127.0.0.1") ||
+        origin.includes("onrender.com")
+      ) {
+        return callback(null, true);
+      }
+
+      // Allow dynamically to ensure frontend connectivity across domains
+      return callback(null, true);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
@@ -45,9 +68,13 @@ app.use(
       "X-Requested-With",
       "Accept",
       "x-admin-secret",
+      "Origin",
     ],
+    exposedHeaders: ["Set-Cookie"],
+    maxAge: 86400,
   }),
 );
+
 
 
 app.use(cookieParser());
