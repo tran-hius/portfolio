@@ -1,11 +1,8 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { fetchSkills } from "../services/skill.service.js";
 import { Reveal } from "./Reveal.js";
+import { SkillGalaxy3D } from "./SkillGalaxy3D.js";
 import type { Skill } from "../types/portfolio.js";
-
-const SkillGalaxy3D = lazy(() =>
-  import("./SkillGalaxy3D.js").then((m) => ({ default: m.SkillGalaxy3D }))
-);
 
 const DEFAULT_SKILLS: Record<string, Skill[]> = {
   Frontend: [
@@ -147,24 +144,13 @@ export const Skills = () => {
 
         {/* Main Content: 3D Galaxy View vs Grid Matrix View */}
         {viewMode === "3d" ? (
-          <Reveal direction="up" delayMs={150}>
-            <Suspense
-              fallback={
-                <div className="w-full h-[520px] sm:h-[620px] rounded-3xl border border-border-subtle bg-slate-950/60 backdrop-blur-xl flex flex-col items-center justify-center gap-3">
-                  <div className="w-8 h-8 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin" />
-                  <span className="text-xs font-mono text-cyan-400">
-                    Initializing 3D Neural Constellation...
-                  </span>
-                </div>
-              }
-            >
-              <SkillGalaxy3D
-                skills={allSkills}
-                activeCategory={activeCategory}
-                onSelectCategory={(cat) => setActiveCategory(cat)}
-              />
-            </Suspense>
-          </Reveal>
+          <div className="w-full">
+            <SkillGalaxy3D
+              skills={allSkills}
+              activeCategory={activeCategory}
+              onSelectCategory={(cat) => setActiveCategory(cat)}
+            />
+          </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
             {displayedSkills.map((skill, index) => (

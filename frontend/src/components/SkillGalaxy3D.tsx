@@ -17,10 +17,9 @@ interface SkillNodeData {
   mesh: THREE.Mesh;
   haloMesh: THREE.Mesh;
   sprite: THREE.Sprite;
-  originalScale: number;
-  targetScale: number;
   currentScale: number;
-  opacity: number;
+  targetScale: number;
+  currentOpacity: number;
   targetOpacity: number;
 }
 
@@ -35,34 +34,35 @@ const getCategoryColor = (category?: string) => {
   if (cat.includes("data") || cat.includes("db") || cat.includes("sql")) {
     return { main: 0xf59e0b, hex: "#f59e0b", light: "#fbbf24" }; // Amber
   }
-  if (cat.includes("devops") || cat.includes("cloud") || cat.includes("dock")) {
+  if (cat.includes("devops") || cat.includes("cloud") || cat.includes("tool")) {
     return { main: 0x8b5cf6, hex: "#8b5cf6", light: "#a78bfa" }; // Purple
-  }
-  if (cat.includes("tool") || cat.includes("arch") || cat.includes("system")) {
-    return { main: 0xec4899, hex: "#ec4899", light: "#f472b6" }; // Pink
   }
   return { main: 0x38bdf8, hex: "#38bdf8", light: "#7dd3fc" }; // Sky Default
 };
 
 const createTextSprite = (skill: Skill, colorHex: string, lightHex: string): THREE.Sprite => {
   const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d")!;
-  canvas.width = 384;
-  canvas.height = 160;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    const fallbackMat = new THREE.SpriteMaterial({ transparent: true, opacity: 0 });
+    return new THREE.Sprite(fallbackMat);
+  }
 
-  // Background Glass Pill
-  const radius = 28;
-  const x = 16;
-  const y = 20;
-  const w = canvas.width - 32;
-  const h = canvas.height - 40;
+  canvas.width = 384;
+  canvas.height = 140;
+
+  const radius = 24;
+  const x = 12;
+  const y = 14;
+  const w = canvas.width - 24;
+  const h = canvas.height - 28;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Gradient fill
+  // Background Glass Pill
   const bgGrad = ctx.createLinearGradient(x, y, x + w, y + h);
-  bgGrad.addColorStop(0, "rgba(9, 14, 26, 0.88)");
-  bgGrad.addColorStop(1, "rgba(15, 23, 42, 0.82)");
+  bgGrad.addColorStop(0, "rgba(8, 14, 28, 0.92)");
+  bgGrad.addColorStop(1, "rgba(15, 23, 42, 0.85)");
 
   ctx.save();
   ctx.beginPath();
@@ -71,29 +71,29 @@ const createTextSprite = (skill: Skill, colorHex: string, lightHex: string): THR
   ctx.fill();
 
   // Glowing Border
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 3;
   ctx.strokeStyle = colorHex;
   ctx.stroke();
 
   // Category Tag Badge
-  const catText = (skill.category || "Skill").toUpperCase();
-  ctx.font = "bold 20px 'JetBrains Mono', monospace";
+  const catText = (skill.category || "TECH").toUpperCase();
+  ctx.font = "bold 18px monospace";
   ctx.fillStyle = lightHex;
-  ctx.fillText(catText, x + 24, y + 42);
+  ctx.fillText(catText, x + 20, y + 36);
 
   // Skill Name
-  ctx.font = "bold 32px 'Plus Jakarta Sans', system-ui, sans-serif";
+  ctx.font = "bold 28px system-ui, sans-serif";
   ctx.fillStyle = "#ffffff";
-  ctx.fillText(skill.name, x + 24, y + 84);
+  ctx.fillText(skill.name, x + 20, y + 74);
 
   // Proficiency Indicator if available
   if (typeof skill.proficiency === "number" && skill.proficiency > 0) {
-    const barW = 80;
-    const barH = 6;
-    const barX = x + w - barW - 24;
-    const barY = y + 74;
+    const barW = 70;
+    const barH = 5;
+    const barX = x + w - barW - 20;
+    const barY = y + 66;
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
     ctx.beginPath();
     ctx.roundRect(barX, barY, barW, barH, 3);
     ctx.fill();
@@ -117,7 +117,7 @@ const createTextSprite = (skill: Skill, colorHex: string, lightHex: string): THR
   });
 
   const sprite = new THREE.Sprite(spriteMaterial);
-  sprite.scale.set(48, 20, 1);
+  sprite.scale.set(44, 16, 1);
   return sprite;
 };
 
@@ -128,57 +128,99 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
   const [hoveredSkill, setHoveredSkill] = useState<Skill | null>(null);
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
 
-  const nodeMapRef = useRef<Map<THREE.Mesh, SkillNodeData>>(new Map());
+  const isAutoRotatingRef = useRef(true);
+  const activeCategoryRef = useRef(activeCategory);
+  const skillsRef = useRef(skills);
+  const onSelectCategoryRef = useRef(onSelectCategory);
+
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const groupRef = useRef<THREE.Group | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const mainGroupRef = useRef<THREE.Group | null>(null);
+  const nodesListRef = useRef<SkillNodeData[]>([]);
 
-  // Reset to auto-rotation on demand
+  // Keep refs up-to-date without triggering full WebGL teardowns
+  useEffect(() => {
+    isAutoRotatingRef.current = isAutoRotating;
+  }, [isAutoRotating]);
+
+  useEffect(() => {
+    activeCategoryRef.current = activeCategory;
+  }, [activeCategory]);
+
+  useEffect(() => {
+    skillsRef.current = skills;
+  }, [skills]);
+
+  useEffect(() => {
+    onSelectCategoryRef.current = onSelectCategory;
+  }, [onSelectCategory]);
+
+  // Reset View
   const handleResetCamera = useCallback(() => {
-    if (!cameraRef.current || !groupRef.current) return;
-    groupRef.current.rotation.set(0, 0, 0);
-    cameraRef.current.position.set(0, 20, 420);
+    if (!cameraRef.current || !mainGroupRef.current) return;
+    mainGroupRef.current.rotation.set(0, 0, 0);
+    cameraRef.current.position.set(0, 15, 390);
     cameraRef.current.lookAt(0, 0, 0);
     setIsAutoRotating(true);
+    isAutoRotatingRef.current = true;
     setSelectedSkill(null);
     setHoveredSkill(null);
   }, []);
 
+  const toggleAutoRotate = useCallback(() => {
+    setIsAutoRotating((prev) => {
+      isAutoRotatingRef.current = !prev;
+      return !prev;
+    });
+  }, []);
+
+  // Main WebGL Scene Initialization (runs once on mount)
   useEffect(() => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
 
-    // 1. Scene & Camera setup
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 580;
+    let animationFrameId: number;
 
+    const width = Math.max(container.clientWidth || 600, 300);
+    const height = Math.max(container.clientHeight || 520, 350);
+
+    // 1. Scene & Camera
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 2000);
-    camera.position.set(0, 20, 420);
+    camera.position.set(0, 15, 390);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: true,
-      powerPreference: "high-performance",
-    });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance",
+      });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      rendererRef.current = renderer;
+    } catch (err) {
+      console.warn("WebGL initialization failed:", err);
+      return;
+    }
 
     const mainGroup = new THREE.Group();
     scene.add(mainGroup);
-    groupRef.current = mainGroup;
+    mainGroupRef.current = mainGroup;
 
-    // 2. Cosmic Central Core & Atmosphere
-    const coreGeo = new THREE.IcosahedronGeometry(28, 2);
+    // 2. Cosmic Core (Icosahedron + Glowing center)
+    const coreGeo = new THREE.IcosahedronGeometry(24, 2);
     const coreMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       wireframe: true,
@@ -188,7 +230,7 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
     const coreMesh = new THREE.Mesh(coreGeo, coreMat);
     mainGroup.add(coreMesh);
 
-    const innerCoreGeo = new THREE.SphereGeometry(14, 16, 16);
+    const innerCoreGeo = new THREE.SphereGeometry(12, 16, 16);
     const innerCoreMat = new THREE.MeshBasicMaterial({
       color: 0xe0f2fe,
       transparent: true,
@@ -197,13 +239,13 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
     const innerCoreMesh = new THREE.Mesh(innerCoreGeo, innerCoreMat);
     mainGroup.add(innerCoreMesh);
 
-    // 3. Cosmic Starfield Particles
-    const starCount = 350;
+    // 3. Background Starfield
+    const starCount = 300;
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
 
     for (let i = 0; i < starCount; i++) {
-      const radius = 250 + Math.random() * 300;
+      const radius = 240 + Math.random() * 260;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
 
@@ -213,17 +255,17 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
 
       const colorMix = Math.random();
       if (colorMix > 0.6) {
-        starColors[i * 3] = 0.22; // R
-        starColors[i * 3 + 1] = 0.74; // G
-        starColors[i * 3 + 2] = 0.97; // B (Cyan)
+        starColors[i * 3] = 0.22;
+        starColors[i * 3 + 1] = 0.74;
+        starColors[i * 3 + 2] = 0.97;
       } else if (colorMix > 0.3) {
         starColors[i * 3] = 0.06;
         starColors[i * 3 + 1] = 0.72;
-        starColors[i * 3 + 2] = 0.5; // (Emerald)
+        starColors[i * 3 + 2] = 0.5;
       } else {
-        starColors[i * 3] = 0.9;
+        starColors[i * 3] = 0.95;
         starColors[i * 3 + 1] = 0.95;
-        starColors[i * 3 + 2] = 1.0; // White/Blue
+        starColors[i * 3 + 2] = 1.0;
       }
     }
 
@@ -232,34 +274,30 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
     starGeo.setAttribute("color", new THREE.BufferAttribute(starColors, 3));
 
     const starMat = new THREE.PointsMaterial({
-      size: 3,
+      size: 2.8,
       vertexColors: true,
       transparent: true,
-      opacity: 0.65,
+      opacity: 0.6,
       blending: THREE.AdditiveBlending,
     });
     const starField = new THREE.Points(starGeo, starMat);
     scene.add(starField);
 
-    // 4. Generate 3D Nodes for each Skill
+    // 4. Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0x38bdf8, 2, 800);
+    pointLight.position.set(150, 150, 150);
+    scene.add(pointLight);
+
+    // 5. Create Skill Nodes
+    const currentSkills = skillsRef.current;
     const nodes: SkillNodeData[] = [];
-    nodeMapRef.current.clear();
+    const sphereRadius = 160;
+    const count = Math.max(currentSkills.length, 1);
 
-    const sphereRadius = 175;
-    const count = Math.max(skills.length, 1);
-
-    // Group skills by category for harmonic positioning
-    const categoryGroups: Record<string, Skill[]> = {};
-    skills.forEach((s) => {
-      const cat = s.category || "General";
-      if (!categoryGroups[cat]) categoryGroups[cat] = [];
-      categoryGroups[cat].push(s);
-    });
-
-    let currentIdx = 0;
-    skills.forEach((skill) => {
-      const i = currentIdx++;
-      // Fibonacci sphere distribution
+    currentSkills.forEach((skill, i) => {
       const phi = Math.acos(1 - (2 * (i + 0.5)) / count);
       const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5);
 
@@ -272,7 +310,7 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
       const colorData = getCategoryColor(skill.category);
 
       // Node Sphere
-      const sphereGeo = new THREE.SphereGeometry(7.5, 24, 24);
+      const sphereGeo = new THREE.SphereGeometry(7, 20, 20);
       const sphereMat = new THREE.MeshStandardMaterial({
         color: colorData.main,
         emissive: colorData.main,
@@ -284,7 +322,7 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
       nodeMesh.position.copy(pos);
 
       // Outer Halo Ring
-      const haloGeo = new THREE.RingGeometry(9, 11, 24);
+      const haloGeo = new THREE.RingGeometry(8.5, 10.5, 20);
       const haloMat = new THREE.MeshBasicMaterial({
         color: colorData.main,
         side: THREE.DoubleSide,
@@ -294,17 +332,16 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
       });
       const haloMesh = new THREE.Mesh(haloGeo, haloMat);
       haloMesh.position.copy(pos);
-      haloMesh.lookAt(0, 0, 0);
 
       // Text Sprite Label
       const sprite = createTextSprite(skill, colorData.hex, colorData.light);
-      sprite.position.set(pos.x, pos.y + 14, pos.z);
+      sprite.position.set(pos.x, pos.y + 13, pos.z);
 
       mainGroup.add(nodeMesh);
       mainGroup.add(haloMesh);
       mainGroup.add(sprite);
 
-      const nodeData: SkillNodeData = {
+      nodes.push({
         skill,
         position: pos,
         colorHex: colorData.hex,
@@ -313,18 +350,16 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
         mesh: nodeMesh,
         haloMesh,
         sprite,
-        originalScale: 1,
-        targetScale: 1,
         currentScale: 1,
-        opacity: 1,
+        targetScale: 1,
+        currentOpacity: 1,
         targetOpacity: 1,
-      };
-
-      nodes.push(nodeData);
-      nodeMapRef.current.set(nodeMesh, nodeData);
+      });
     });
 
-    // 5. Constellation Lines between related skills in the same category
+    nodesListRef.current = nodes;
+
+    // 6. Constellation Connecting Lines
     const linePositions: number[] = [];
     const lineColors: number[] = [];
 
@@ -332,10 +367,10 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
       for (let j = i + 1; j < nodes.length; j++) {
         const n1 = nodes[i]!;
         const n2 = nodes[j]!;
-        const isSameCategory = n1.skill.category === n2.skill.category;
+        const isSameCat = n1.skill.category === n2.skill.category;
         const dist = n1.position.distanceTo(n2.position);
 
-        if ((isSameCategory && dist < sphereRadius * 1.5) || dist < sphereRadius * 0.75) {
+        if ((isSameCat && dist < sphereRadius * 1.5) || dist < sphereRadius * 0.7) {
           linePositions.push(n1.position.x, n1.position.y, n1.position.z);
           linePositions.push(n2.position.x, n2.position.y, n2.position.z);
 
@@ -348,32 +383,22 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
       }
     }
 
-    const lineGeo = new THREE.BufferGeometry();
-    lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(linePositions, 3));
-    lineGeo.setAttribute("color", new THREE.Float32BufferAttribute(lineColors, 3));
+    if (linePositions.length > 0) {
+      const lineGeo = new THREE.BufferGeometry();
+      lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(linePositions, 3));
+      lineGeo.setAttribute("color", new THREE.Float32BufferAttribute(lineColors, 3));
 
-    const lineMat = new THREE.LineBasicMaterial({
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.35,
-      blending: THREE.AdditiveBlending,
-    });
-    const constellationLines = new THREE.LineSegments(lineGeo, lineMat);
-    mainGroup.add(constellationLines);
+      const lineMat = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.35,
+        blending: THREE.AdditiveBlending,
+      });
+      const constellationLines = new THREE.LineSegments(lineGeo, lineMat);
+      mainGroup.add(constellationLines);
+    }
 
-    // 6. Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
-    scene.add(ambientLight);
-
-    const pointLight1 = new THREE.PointLight(0x38bdf8, 2, 800);
-    pointLight1.position.set(200, 200, 200);
-    scene.add(pointLight1);
-
-    const pointLight2 = new THREE.PointLight(0x818cf8, 1.5, 800);
-    pointLight2.position.set(-200, -200, -200);
-    scene.add(pointLight2);
-
-    // 7. Interactive Controls & Mouse Dragging
+    // 7. Interactive Controls & Mouse / Touch Dragging
     let isDragging = false;
     let prevMouseX = 0;
     let prevMouseY = 0;
@@ -382,6 +407,7 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
 
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2(-1000, -1000);
+    let hoveredMeshTarget: THREE.Mesh | null = null;
 
     const onPointerDown = (e: MouseEvent | TouchEvent) => {
       isDragging = true;
@@ -389,6 +415,7 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
       const clientY = "touches" in e ? e.touches[0]!.clientY : e.clientY;
       prevMouseX = clientX;
       prevMouseY = clientY;
+      isAutoRotatingRef.current = false;
       setIsAutoRotating(false);
     };
 
@@ -416,16 +443,16 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
 
     const onClick = () => {
       raycaster.setFromCamera(mouse, camera);
-      const meshes = Array.from(nodeMapRef.current.keys());
+      const meshes = nodesListRef.current.map((n) => n.mesh);
       const intersects = raycaster.intersectObjects(meshes);
 
       if (intersects.length > 0) {
-        const hitMesh = intersects[0]!.object as THREE.Mesh;
-        const data = nodeMapRef.current.get(hitMesh);
-        if (data) {
-          setSelectedSkill(data.skill);
-          if (onSelectCategory && data.skill.category) {
-            onSelectCategory(data.skill.category);
+        const hit = intersects[0]!.object as THREE.Mesh;
+        const targetNode = nodesListRef.current.find((n) => n.mesh === hit);
+        if (targetNode) {
+          setSelectedSkill(targetNode.skill);
+          if (onSelectCategoryRef.current && targetNode.skill.category) {
+            onSelectCategoryRef.current(targetNode.skill.category);
           }
         }
       }
@@ -440,11 +467,11 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
     canvas.addEventListener("touchmove", onPointerMove, { passive: true });
     window.addEventListener("touchend", onPointerUp);
 
-    // 8. Responsive Resize
+    // 8. Resize Observer
     const handleResize = () => {
       if (!container || !renderer || !camera) return;
-      const newWidth = container.clientWidth;
-      const newHeight = container.clientHeight;
+      const newWidth = Math.max(container.clientWidth || 600, 300);
+      const newHeight = Math.max(container.clientHeight || 520, 350);
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(newWidth, newHeight);
@@ -453,19 +480,21 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(container);
 
+    // Trigger initial resize sync
+    setTimeout(handleResize, 50);
+
     // 9. Animation Loop
-    let animationId: number;
-    let clock = new THREE.Clock();
+    const clock = new THREE.Clock();
 
     const animate = () => {
-      animationId = requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
       const time = clock.getElapsedTime();
 
-      // Rotation Physics & Damping
+      // Physics Damping
       if (!isDragging) {
         rotVelX *= 0.94;
         rotVelY *= 0.94;
-        if (Math.abs(rotVelY) < 0.0015 && isAutoRotating) {
+        if (Math.abs(rotVelY) < 0.0015 && isAutoRotatingRef.current) {
           rotVelY = 0.003;
         }
       }
@@ -473,62 +502,55 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
       mainGroup.rotation.y += rotVelY;
       mainGroup.rotation.x += rotVelX;
 
-      // Cosmic background gentle wobble
-      starField.rotation.y = time * 0.015;
-      coreMesh.rotation.y = time * 0.25;
-      coreMesh.rotation.x = time * 0.15;
-      innerCoreMesh.scale.setScalar(1 + Math.sin(time * 2.5) * 0.12);
+      starField.rotation.y = time * 0.012;
+      coreMesh.rotation.y = time * 0.2;
+      coreMesh.rotation.x = time * 0.12;
+      innerCoreMesh.scale.setScalar(1 + Math.sin(time * 2.5) * 0.1);
 
-      // Raycasting for Hover Detection
+      // Raycasting
       raycaster.setFromCamera(mouse, camera);
-      const meshes = Array.from(nodeMapRef.current.keys());
+      const meshes = nodesListRef.current.map((n) => n.mesh);
       const intersects = raycaster.intersectObjects(meshes);
 
-      let foundHover: Skill | null = null;
-      let hoveredMesh: THREE.Mesh | null = null;
-
       if (intersects.length > 0) {
-        hoveredMesh = intersects[0]!.object as THREE.Mesh;
-        const data = nodeMapRef.current.get(hoveredMesh);
-        if (data) {
-          foundHover = data.skill;
-          canvas.style.cursor = "pointer";
-        }
+        hoveredMeshTarget = intersects[0]!.object as THREE.Mesh;
+        const targetNode = nodesListRef.current.find((n) => n.mesh === hoveredMeshTarget);
+        setHoveredSkill(targetNode?.skill || null);
+        canvas.style.cursor = "pointer";
       } else {
+        hoveredMeshTarget = null;
+        setHoveredSkill(null);
         canvas.style.cursor = isDragging ? "grabbing" : "grab";
       }
 
-      setHoveredSkill(foundHover);
+      // Update Nodes Scale & Filtering
+      const currentCat = activeCategoryRef.current;
+      nodesListRef.current.forEach((n) => {
+        const isHovered = n.mesh === hoveredMeshTarget;
+        const isMatch =
+          currentCat === "All" ||
+          (n.skill.category || "").toLowerCase() === currentCat.toLowerCase();
 
-      // Animate Nodes Scale, Pulse, and Active Category Filtering
-      nodes.forEach((n) => {
-        const isHovered = n.mesh === hoveredMesh;
-        const isMatchCategory =
-          activeCategory === "All" ||
-          (n.skill.category || "").toLowerCase() === activeCategory.toLowerCase();
-
-        n.targetScale = isHovered ? 1.6 : isMatchCategory ? 1.0 : 0.65;
-        n.targetOpacity = isMatchCategory ? 1.0 : 0.2;
+        n.targetScale = isHovered ? 1.5 : isMatch ? 1.0 : 0.6;
+        n.targetOpacity = isMatch ? 1.0 : 0.25;
 
         n.currentScale += (n.targetScale - n.currentScale) * 0.12;
-        n.opacity += (n.targetOpacity - n.opacity) * 0.12;
+        n.currentOpacity += (n.targetOpacity - n.currentOpacity) * 0.12;
 
         n.mesh.scale.setScalar(n.currentScale);
         n.haloMesh.scale.setScalar(
-          n.currentScale * (1 + Math.sin(time * 3 + n.position.x) * 0.15)
+          n.currentScale * (1 + Math.sin(time * 3 + n.position.x) * 0.12)
         );
-
         n.haloMesh.lookAt(camera.position);
 
         const mat = n.mesh.material as THREE.MeshStandardMaterial;
-        mat.emissiveIntensity = isHovered ? 1.4 : isMatchCategory ? 0.7 : 0.1;
-        mat.opacity = n.opacity;
+        mat.emissiveIntensity = isHovered ? 1.4 : isMatch ? 0.7 : 0.15;
+        mat.opacity = n.currentOpacity;
         mat.transparent = true;
 
-        (n.haloMesh.material as THREE.MeshBasicMaterial).opacity = n.opacity * 0.5;
-        (n.sprite.material as THREE.SpriteMaterial).opacity = n.opacity;
-
-        n.sprite.scale.set(48 * n.currentScale, 20 * n.currentScale, 1);
+        (n.haloMesh.material as THREE.MeshBasicMaterial).opacity = n.currentOpacity * 0.5;
+        (n.sprite.material as THREE.SpriteMaterial).opacity = n.currentOpacity;
+        n.sprite.scale.set(44 * n.currentScale, 16 * n.currentScale, 1);
       });
 
       renderer.render(scene, camera);
@@ -536,9 +558,9 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
 
     animate();
 
-    // 10. Clean-up on unmount
+    // 10. Clean-up
     return () => {
-      cancelAnimationFrame(animationId);
+      cancelAnimationFrame(animationFrameId);
       resizeObserver.disconnect();
 
       canvas.removeEventListener("mousedown", onPointerDown);
@@ -553,12 +575,15 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
       scene.clear();
       renderer.dispose();
     };
-  }, [skills, activeCategory, onSelectCategory, isAutoRotating]);
+  }, []);
 
   const activeDisplaySkill = hoveredSkill || selectedSkill;
 
   return (
-    <div className="relative w-full h-[520px] sm:h-[620px] rounded-3xl overflow-hidden border border-border-subtle bg-radial from-[#0d1527] via-[#050711] to-[#020408] shadow-2xl flex items-center justify-center select-none">
+    <div
+      ref={containerRef}
+      className="relative w-full h-[520px] sm:h-[620px] rounded-3xl overflow-hidden border border-border-subtle bg-radial from-[#0d1527] via-[#050711] to-[#020408] shadow-2xl flex items-center justify-center select-none"
+    >
       {/* 3D WebGL Canvas */}
       <canvas
         ref={canvasRef}
@@ -575,7 +600,7 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
 
         <div className="flex items-center gap-2 pointer-events-auto">
           <button
-            onClick={() => setIsAutoRotating((prev) => !prev)}
+            onClick={toggleAutoRotate}
             title={isAutoRotating ? "Pause auto-rotation" : "Resume auto-rotation"}
             className="p-2 rounded-xl bg-slate-900/80 border border-border-subtle hover:border-cyan-500/50 text-muted hover:text-white text-xs backdrop-blur-md transition-all shadow-md active:scale-95"
           >
@@ -642,7 +667,7 @@ export const SkillGalaxy3D: React.FC<SkillGalaxy3DProps> = ({
           )}
         </div>
       ) : (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-950/70 border border-border-subtle backdrop-blur-md text-xs font-mono text-muted pointer-events-none z-20 shadow-lg">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-950/70 border border-border-subtle backdrop-blur-md text-xs font-mono text-muted pointer-events-none z-20 shadow-lg whitespace-nowrap">
           🖱️ Drag to rotate sphere • Hover / click any 3D node
         </div>
       )}
