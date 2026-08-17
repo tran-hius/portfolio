@@ -6,7 +6,7 @@ import { userRepository } from "../repositories/user.repository.js";
 import tokenRepository from "../repositories/token.repository.js";
 import type { LoginDTO } from "../dtos/login-dto.js";
 import type { LoginResponseDTO } from "../dtos/login-response-dto.js";
-import { UnauthorizedError } from "../errors/app.error.js";
+import { UnauthorizedError, BadRequestError } from "../errors/app.error.js";
 import { Logger } from "../utils/logger.util.js";
 
 export const AuthService = {
@@ -166,12 +166,12 @@ export const AuthService = {
     if (data.email !== undefined) {
       const email = data.email.trim().toLowerCase();
       if (!email) {
-        throw new Error("Email cannot be empty");
+        throw new BadRequestError("Email cannot be empty");
       }
       if (email !== user.email) {
         const existing = await UserService.findByEmail(email);
         if (existing && existing._id.toString() !== userId) {
-          throw new Error("Email is already in use by another account");
+          throw new BadRequestError("Email is already in use by another account");
         }
         updatePayload.email = email;
       }
@@ -179,16 +179,17 @@ export const AuthService = {
 
     if (data.password) {
       if (data.password.length < 6) {
-        throw new Error("New password must be at least 6 characters");
+        throw new BadRequestError("New password must be at least 6 characters");
       }
-      if (data.currentPassword) {
-        const isMatch = await HashUtil.compare(
-          data.currentPassword,
-          String(user.password),
-        );
-        if (!isMatch) {
-          throw new Error("Current password does not match");
-        }
+      if (!data.currentPassword) {
+        throw new BadRequestError("Current password is required to change password");
+      }
+      const isMatch = await HashUtil.compare(
+        data.currentPassword,
+        String(user.password),
+      );
+      if (!isMatch) {
+        throw new BadRequestError("Current password does not match");
       }
       updatePayload.password = await HashUtil.hash(data.password);
     }

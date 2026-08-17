@@ -50,7 +50,20 @@ export const SocketService = {
     io = new SocketIOServer(httpServer, {
       cors: {
         origin: (origin, callback) => {
-          callback(null, true);
+          if (!origin) return callback(null, true);
+          const allowedOrigins = envConfig.CORS_ORIGINS;
+          if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+          }
+          if (
+            origin.endsWith(".vercel.app") ||
+            origin.includes("localhost") ||
+            origin.includes("127.0.0.1") ||
+            origin.includes("onrender.com")
+          ) {
+            return callback(null, true);
+          }
+          return callback(null, false);
         },
         credentials: true,
         methods: ["GET", "POST"],

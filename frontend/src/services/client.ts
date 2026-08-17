@@ -1,4 +1,15 @@
 const getBaseUrl = (): string => {
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1") &&
+    import.meta.env.DEV
+  ) {
+    const devUrl = import.meta.env.VITE_API_URL || "http://localhost:3001/api/v1";
+    const cleanDev = devUrl.trim().replace(/\/+$/, "");
+    return cleanDev.endsWith("/api/v1") ? cleanDev : `${cleanDev}/api/v1`;
+  }
+
   const raw =
     (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
     "https://portfolio-856o.onrender.com/api/v1";

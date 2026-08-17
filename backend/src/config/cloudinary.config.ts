@@ -1,8 +1,22 @@
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Load environment variables immediately and handle potential CWD differences
+dotenv.config();
+try {
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+  dotenv.config({ path: path.resolve(currentDir, "../../.env") });
+  dotenv.config({ path: path.resolve(currentDir, "../../../.env") });
+} catch {
+  // Ignore fallback error
+}
+
 interface CloudinaryConfig {
-  cloudName: string;
-  apiKey: string;
-  apiSecret: string;
-  isConfigured: boolean;
+  readonly cloudName: string;
+  readonly apiKey: string;
+  readonly apiSecret: string;
+  readonly isConfigured: boolean;
 }
 
 const parseCloudinaryUrl = (
@@ -27,29 +41,38 @@ const parseCloudinaryUrl = (
   }
 };
 
-const parsedFromUrl = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
-
-const cloudName =
-  process.env.CLOUDINARY_CLOUD_NAME ||
-  process.env.CLOUDINARY_NAME ||
-  parsedFromUrl.cloudName ||
-  "";
-
-const apiKey =
-  process.env.CLOUDINARY_API_KEY ||
-  process.env.CLOUDINARY_KEY ||
-  parsedFromUrl.apiKey ||
-  "";
-
-const apiSecret =
-  process.env.CLOUDINARY_API_SECRET ||
-  process.env.CLOUDINARY_SECRET ||
-  parsedFromUrl.apiSecret ||
-  "";
-
 export const cloudinaryConfig: CloudinaryConfig = {
-  cloudName,
-  apiKey,
-  apiSecret,
-  isConfigured: Boolean(cloudName && apiKey && apiSecret),
+  get cloudName(): string {
+    const parsed = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
+    return (
+      process.env.CLOUDINARY_CLOUD_NAME ||
+      process.env.CLOUDINARY_NAME ||
+      parsed.cloudName ||
+      ""
+    );
+  },
+
+  get apiKey(): string {
+    const parsed = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
+    return (
+      process.env.CLOUDINARY_API_KEY ||
+      process.env.CLOUDINARY_KEY ||
+      parsed.apiKey ||
+      ""
+    );
+  },
+
+  get apiSecret(): string {
+    const parsed = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
+    return (
+      process.env.CLOUDINARY_API_SECRET ||
+      process.env.CLOUDINARY_SECRET ||
+      parsed.apiSecret ||
+      ""
+    );
+  },
+
+  get isConfigured(): boolean {
+    return Boolean(this.cloudName && this.apiKey && this.apiSecret);
+  },
 };

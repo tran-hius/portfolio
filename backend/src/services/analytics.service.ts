@@ -12,6 +12,10 @@ interface ActiveClient {
 
 const activeClients = new Map<Response, ActiveClient>();
 
+const escapeRegex = (str: string): string => {
+  return str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
+
 export const AnalyticsService = {
   
   async logVisit(data: CreateVisitorDTO) {
@@ -88,7 +92,8 @@ export const AnalyticsService = {
     const filter: Record<string, any> = {};
 
     if (searchIp && typeof searchIp === "string") {
-      filter.ip = { $regex: searchIp.trim(), $options: "i" };
+      const safeSearchIp = escapeRegex(searchIp.trim());
+      filter.ip = { $regex: safeSearchIp, $options: "i" };
     }
 
     const total = await visitorRepository.count(filter);

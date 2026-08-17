@@ -59,8 +59,8 @@ app.use(
         return callback(null, true);
       }
 
-      // Allow dynamically to ensure frontend connectivity across domains
-      return callback(null, true);
+      // Reject untrusted origins
+      return callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
