@@ -77,11 +77,11 @@ export const Hero = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-5 flex items-center justify-center relative animate-[fadeIn_1.2s_cubic-bezier(0.16,1,0.3,1)_0.4s_both]">
+        <div className="lg:col-span-5 w-full h-full min-h-[460px] sm:min-h-[520px] lg:min-h-[580px] xl:min-h-[640px] flex items-center justify-center relative animate-[fadeIn_1.2s_cubic-bezier(0.16,1,0.3,1)_0.4s_both]">
           <Suspense
             fallback={
-              <div className="w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] rounded-full border border-cyan-500/10 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-cyan-500/10 blur-xl animate-pulse" />
+              <div className="w-full h-full min-h-[460px] sm:min-h-[520px] lg:min-h-[580px] flex items-center justify-center">
+                <div className="w-24 h-24 rounded-full bg-cyan-500/10 blur-2xl animate-pulse" />
               </div>
             }
           >

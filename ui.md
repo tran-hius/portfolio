@@ -1,128 +1,150 @@
-# Custom Cursor — Mix Blend Difference
+# Fix Hero Visual Container — Full-Size Rendering
 
-Hãy thêm một **custom cursor effect** hiện đại cho toàn bộ portfolio website hiện tại.
+Hãy kiểm tra và sửa **hero visual/hero animation ở phía bên phải của Hero Section**.
 
-## Yêu cầu chính
+Hiện tại hero visual đang bị giới hạn bởi một container có `width` / `height` cố định, khiến animation/graphic bên phải nhìn bị nhỏ và có nhiều khoảng trống xung quanh.
 
-Tạo một cursor hình tròn màu trắng, kích thước khoảng **70–90px**, luôn đi theo vị trí chuột.
+## Mục tiêu
 
-Cursor phải sử dụng:
+Hero visual phải **tận dụng tối đa toàn bộ không gian được phân bổ cho cột bên phải**, thay vì bị giới hạn bởi kích thước cố định.
+
+### Yêu cầu
+
+1. Kiểm tra toàn bộ component hero và tìm:
+
+   * `width`
+   * `height`
+   * `max-width`
+   * `max-height`
+   * `aspect-ratio`
+   * `overflow`
+   * fixed pixel dimensions
+   * wrapper/container đang giới hạn kích thước visual.
+
+2. Loại bỏ các giới hạn kích thước không cần thiết.
+
+3. Hero visual phải có khả năng:
 
 ```css
-mix-blend-mode: difference;
+width: 100%;
+height: 100%;
 ```
 
-để tạo hiệu ứng đảo màu theo background/content phía dưới:
+và parent container phải cho phép nó thực sự expand.
 
-* Trên nền đen → cursor hiển thị màu trắng.
-* Khi đi qua text/icon màu trắng → vùng cursor biến thành màu đen.
-* Khi đi qua các màu khác → tự động tạo màu tương phản theo cơ chế `difference`.
-* Hiệu ứng phải giống kiểu custom cursor trên các portfolio website creative/developer cao cấp.
+4. Nếu đang sử dụng Three.js / Canvas / WebGL:
 
-## Chuyển động
+   * Canvas phải resize theo kích thước thực tế của container.
+   * Không hard-code canvas size.
+   * Sử dụng `ResizeObserver` hoặc cơ chế tương đương để cập nhật:
 
-Không được để cursor bám chuột cứng.
+     * width
+     * height
+     * camera aspect ratio
+     * renderer size
+     * pixel ratio.
 
-Hãy tạo chuyển động **smooth / lag nhẹ**:
+5. Nếu visual đang dùng `<img>`:
 
-* Cursor chính follow chuột bằng interpolation/lerp.
-* Có một chút delay khoảng 50–100ms tạo cảm giác mượt.
-* Không được delay quá nhiều.
-* Không được gây cảm giác cursor bị giật.
+   * Không dùng kích thước cố định khiến ảnh bị giới hạn.
+   * Sử dụng `width: 100%` và `height: 100%`.
+   * Điều chỉnh `object-fit` phù hợp.
+   * Ưu tiên `object-fit: contain` nếu cần giữ toàn bộ hình.
+   * Nếu design yêu cầu visual tràn rộng hơn container thì cho phép `object-fit: cover` hoặc scale phù hợp.
 
-Có thể sử dụng `requestAnimationFrame`, GSAP hoặc Framer Motion nếu project hiện tại đã sử dụng chúng. **Ưu tiên tận dụng dependency hiện có, không cài thêm thư viện nếu không cần thiết.**
+6. Nếu visual là SVG:
 
-## Interaction
+   * Kiểm tra `viewBox`.
+   * Không để SVG bị giới hạn bởi width/height cố định.
+   * Cho phép SVG scale theo parent.
 
-Cursor phải:
+## Layout Hero
 
-1. Bình thường:
+Giữ nguyên layout 2 cột hiện tại:
 
-   * Hình tròn trắng.
-   * `pointer-events: none`.
-   * Luôn nằm trên UI nhưng vẫn blend với nội dung bên dưới.
+```text
+┌──────────────────────────────────────────────────────┐
+│                                                      │
+│   HERO CONTENT                    HERO VISUAL        │
+│   LEFT                            RIGHT              │
+│                                                      │
+│   Heading                         [FULL SIZE]        │
+│   Description                                        │
+│   Buttons                                             │
+│                                                      │
+└──────────────────────────────────────────────────────┘
+```
 
-2. Khi hover text/link/button:
+Hero visual phải chiếm **toàn bộ available space của cột phải**.
 
-   * Cursor có thể scale nhẹ lên khoảng `1.2–1.5`.
-   * Transition phải mượt.
+Không làm thay đổi typography, màu sắc, nội dung hoặc bố cục bên trái.
 
-3. Khi hover project/card:
+## Quan trọng
 
-   * Scale cursor lớn hơn một chút.
-   * Có thể hiển thị một text nhỏ như `VIEW` / `OPEN` ở giữa cursor nếu phù hợp với design hiện tại.
+Không chỉ tăng một giá trị `width` hoặc `height` một cách thủ công.
 
-4. Khi rời khỏi viewport:
+Hãy tìm **root cause** khiến visual bị giới hạn.
 
-   * Cursor fade out.
-   * Khi quay lại viewport thì fade in.
-
-## Technical requirements
-
-* Không phá vỡ cursor mặc định trên mobile/tablet.
-* **Chỉ activate custom cursor trên thiết bị có mouse/pointer chính xác**, ví dụ dùng media query:
-  `@media (pointer: fine)`.
-* Mobile/tablet phải giữ cursor mặc định.
-* Không làm ảnh hưởng đến `click`, `hover`, `pointer-events` hoặc accessibility.
-* Không làm layout shift.
-* Không gây memory leak.
-* Cleanup toàn bộ event listeners khi component unmount.
-* Không tạo quá nhiều DOM elements.
-* Tối ưu animation bằng `requestAnimationFrame` hoặc cơ chế tương đương.
-* Cursor phải có `z-index` đủ cao nhưng không được che hoặc phá interaction của UI.
-
-## Visual style
-
-Giữ nguyên design hiện tại của portfolio.
-
-Cursor cần mang cảm giác:
-
-**minimal / premium / futuristic / editorial / creative developer portfolio**
-
-Không thêm shadow, gradient hoặc màu sắc sặc sỡ nếu không cần thiết.
-
-Hiệu ứng quan trọng nhất là:
-
-**white circular cursor + `mix-blend-mode: difference`**
-
-Ví dụ CSS concept:
+Kiểm tra cả parent containers vì trường hợp thường gặp là:
 
 ```css
-.custom-cursor {
-  position: fixed;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: white;
-  pointer-events: none;
-  mix-blend-mode: difference;
-  transform: translate(-50%, -50%);
-  z-index: 9999;
+.parent {
+  width: 500px;
+  height: 500px;
+}
+
+.visual {
+  width: 100%;
+  height: 100%;
 }
 ```
 
-## Implementation
+Trong trường hợp này chỉ sửa `.visual` là chưa đủ.
 
-Trước khi code:
+Hãy đảm bảo toàn bộ hierarchy:
 
-1. Kiểm tra architecture hiện tại.
-2. Xác định framework/component structure đang sử dụng.
-3. Tìm nơi phù hợp nhất để mount global cursor.
-4. Không tạo implementation trùng với cursor/animation system hiện tại nếu project đã có.
+```text
+Hero Section
+   ↓
+Hero Grid / Right Column
+   ↓
+Visual Wrapper
+   ↓
+Canvas / SVG / Image
+```
 
-Sau đó implement hoàn chỉnh.
+đều có khả năng sử dụng available width/height.
 
-Cuối cùng kiểm tra:
+## Responsive
 
-* Desktop mouse movement.
-* Hover text trắng trên nền đen.
-* Hover background sáng.
-* Hover button/link.
-* Hover project.
-* Scroll page.
-* Resize window.
-* Rời khỏi viewport.
-* Mobile/tablet.
-* Không có console error.
+Desktop:
 
-**Không thay đổi design/layout hiện tại ngoài việc bổ sung custom cursor effect.**
+* Visual lớn, tận dụng tối đa cột phải.
+* Không bị giới hạn bởi fixed dimensions.
+
+Tablet:
+
+* Scale xuống tự nhiên.
+
+Mobile:
+
+* Hero chuyển thành layout một cột như hiện tại.
+* Visual vẫn responsive.
+* Không gây horizontal overflow.
+
+## Không được làm
+
+* Không thay đổi hero content.
+* Không thay đổi text.
+* Không thay đổi màu sắc.
+* Không thay đổi animation concept.
+* Không xóa animation hiện tại.
+* Không thêm scrollbar ngang.
+* Không dùng `width: 100vw` nếu nó gây overflow.
+* Không dùng kích thước pixel cố định để "ép" visual lớn hơn.
+
+Sau khi sửa, kiểm tra trên viewport desktop khoảng **1440×900** và các kích thước responsive phổ biến.
+
+Mục tiêu cuối cùng:
+
+**Hero visual phải visually fill toàn bộ vùng bên phải của Hero Section và không còn cảm giác bị nhốt trong một box nhỏ.**
