@@ -1,6 +1,5 @@
 export const API_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:3001/api/v1";
-
+  import.meta.env.VITE_API_URL || "https://portfolio-856o.onrender.com/api/v1";
 
 export const getCookie = (name: string): string | null => {
   if (typeof document === "undefined") return null;
@@ -25,16 +24,23 @@ export const deleteCookie = (name: string) => {
 };
 
 const USER_KEY = "portfolio_admin_user";
+const TOKEN_KEY = "portfolio_access_token";
 
 export const getStoredToken = (): string | null => {
-  return getCookie("accessToken");
+  return (
+    getCookie("accessToken") ||
+    (typeof localStorage !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null)
+  );
 };
 
 export const setStoredAuth = (token: string, user?: any) => {
   if (token) {
     setCookie("accessToken", token, 1);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(TOKEN_KEY, token);
+    }
   }
-  if (user) {
+  if (user && typeof localStorage !== "undefined") {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   }
 };
@@ -42,9 +48,11 @@ export const setStoredAuth = (token: string, user?: any) => {
 export const clearStoredAuth = () => {
   deleteCookie("accessToken");
   deleteCookie("refreshToken");
-  localStorage.removeItem(USER_KEY);
+  if (typeof localStorage !== "undefined") {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  }
 };
-
 
 export const getStoredUser = () => {
   try {
@@ -119,6 +127,36 @@ export const triggerTokenRefresh = async (): Promise<string> => {
   }
 };
 
+export const fetchPublic = async <T = any>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> => {
+  const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint}`;
+  const response = await fetch(url, options);
+
+  const contentType = response.headers.get("content-type");
+  let responseData: any;
+
+  if (contentType && contentType.includes("application/json")) {
+    responseData = await response.json();
+  } else {
+    responseData = await response.text();
+  }
+
+  if (!response.ok) {
+    const message =
+      typeof responseData === "object" && responseData?.message
+        ? responseData.message
+        : `Request failed with status ${response.status}`;
+    const err = new Error(message);
+    (err as any).status = response.status;
+    (err as any).data = responseData;
+    throw err;
+  }
+
+  return responseData?.data !== undefined ? responseData.data : responseData;
+};
+
 export const fetchWithAuth = async <T = any>(
   endpoint: string,
   options: RequestInit = {},
@@ -139,52 +177,38 @@ export const fetchWithAuth = async <T = any>(
     credentials: "include",
   };
 
-  let res = await fetch(`${API_BASE}${endpoint}`, requestOptions);
+  const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint}`;
+  let response = await fetch(url, requestOptions);
 
-  const isAuthEndpoint =
-    endpoint.startsWith("/auth/login") ||
-    endpoint.startsWith("/auth/register") ||
-    endpoint.startsWith("/auth/refresh");
-
-  if (res.status === 401 && !isAuthEndpoint) {
+  if (response.status === 401 && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
     try {
       const newToken = await triggerTokenRefresh();
       headers.set("Authorization", `Bearer ${newToken}`);
-      res = await fetch(`${API_BASE}${endpoint}`, {
-        ...options,
-        headers,
-        credentials: "include",
-      });
+      response = await fetch(url, { ...requestOptions, headers });
     } catch {
       throw new Error("Session expired. Please log in again.");
     }
   }
 
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(json.message || `Request failed with status ${res.status}`);
-  }
-  return json;
-};
+  const contentType = response.headers.get("content-type");
+  let responseData: any;
 
-export const fetchPublic = async <T = any>(
-  endpoint: string,
-  options: RequestInit = {},
-): Promise<T> => {
-  const headers = new Headers(options.headers || {});
-  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
-    headers.set("Content-Type", "application/json");
+  if (contentType && contentType.includes("application/json")) {
+    responseData = await response.json();
+  } else {
+    responseData = await response.text();
   }
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-    credentials: "include",
-  });
-
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(json.message || `Request failed with status ${res.status}`);
+  if (!response.ok) {
+    const message =
+      typeof responseData === "object" && responseData?.message
+        ? responseData.message
+        : `Request failed with status ${response.status}`;
+    const err = new Error(message);
+    (err as any).status = response.status;
+    (err as any).data = responseData;
+    throw err;
   }
-  return json;
+
+  return responseData?.data !== undefined ? responseData.data : responseData;
 };
