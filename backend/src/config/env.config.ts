@@ -37,6 +37,9 @@ export const envConfig = {
   CORS_ORIGINS: process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
     : [
+        "https://hieutran-theta.vercel.app",
+        "https://tranhieu.dev",
+        "https://www.tranhieu.dev",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",

@@ -3,6 +3,7 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import { envConfig } from "../config/env.config.js";
 import { AnalyticsService } from "./analytics.service.js";
+import { isOriginAllowed } from "../utils/cors.util.js";
 import { Logger } from "../utils/logger.util.js";
 import type { IVisitor } from "../schema/visitor.schema.js";
 
@@ -50,17 +51,7 @@ export const SocketService = {
     io = new SocketIOServer(httpServer, {
       cors: {
         origin: (origin, callback) => {
-          if (!origin) return callback(null, true);
-          const allowedOrigins = envConfig.CORS_ORIGINS;
-          if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
-            return callback(null, true);
-          }
-          if (
-            origin.endsWith(".vercel.app") ||
-            origin.includes("localhost") ||
-            origin.includes("127.0.0.1") ||
-            origin.includes("onrender.com")
-          ) {
+          if (isOriginAllowed(origin)) {
             return callback(null, true);
           }
           return callback(null, false);

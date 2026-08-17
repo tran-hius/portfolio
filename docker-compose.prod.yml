@@ -34,7 +34,7 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://tranhieu.dev,https://www.tranhieu.dev,http://localhost:80,http://localhost:5173}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://hieutran-theta.vercel.app,https://tranhieu.dev,https://www.tranhieu.dev,http://localhost:80,http://localhost:5173}
     depends_on:
       mongodb:
         condition: service_healthy

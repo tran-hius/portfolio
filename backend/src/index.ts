@@ -22,6 +22,7 @@ import { requestLogger } from "./middlewares/logger.middleware.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { AuthService } from "./services/auth.service.js";
 import { SocketService } from "./services/socket.service.js";
+import { isOriginAllowed } from "./utils/cors.util.js";
 import { Logger } from "./utils/logger.util.js";
 
 
@@ -39,27 +40,9 @@ app.use(
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
-      if (!origin) return callback(null, true);
-
-      const allowedOrigins = envConfig.CORS_ORIGINS;
-
-      // Allow if wildcard configured or in explicit list
-      if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+      if (isOriginAllowed(origin)) {
         return callback(null, true);
       }
-
-      // Allow all vercel.app domains, localhost, 127.0.0.1, onrender.com
-      if (
-        origin.endsWith(".vercel.app") ||
-        origin.includes("localhost") ||
-        origin.includes("127.0.0.1") ||
-        origin.includes("onrender.com")
-      ) {
-        return callback(null, true);
-      }
-
-      // Reject untrusted origins
       return callback(null, false);
     },
     credentials: true,
@@ -117,6 +100,16 @@ const startServer = async () => {
 
   const shutdown = async (signal: string) => {
     Logger.warn(`Received ${signal}. Shutting down gracefully...`);
+    try {
+      const io = SocketService.getIO();
+      if (io) {
+        io.close();
+        Logger.info("Socket.IO server closed.");
+      }
+    } catch (ioErr) {
+      Logger.error("Error closing Socket.IO:", ioErr);
+    }
+
     server.close(async () => {
       try {
         await mongoose.connection.close();
