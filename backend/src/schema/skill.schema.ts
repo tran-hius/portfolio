@@ -6,6 +6,7 @@ export interface ISkill {
   category: string;
   proficiency?: number | null | undefined;
   icon?: string | null | undefined;
+  color?: string | null | undefined;
   order?: number | undefined;
   isFeatured?: boolean | undefined;
   createdAt?: Date | undefined;
@@ -40,6 +41,11 @@ const skillSchema = new Schema<ISkill>(
     icon: {
       type: String,
       default: null,
+    },
+    color: {
+      type: String,
+      default: null,
+      trim: true,
     },
     order: {
       type: Number,

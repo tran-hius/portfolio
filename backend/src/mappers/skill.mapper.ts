@@ -16,6 +16,7 @@ export class SkillMapper {
       category: rest.category,
       proficiency: rest.proficiency ?? null,
       icon: rest.icon ?? null,
+      color: rest.color ?? null,
       order: typeof rest.order === "number" ? rest.order : 0,
       isFeatured: Boolean(rest.isFeatured),
       createdAt: rest.createdAt,

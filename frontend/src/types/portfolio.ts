@@ -17,6 +17,7 @@ export interface Skill {
   category: string;
   proficiency?: number | null;
   icon?: string | null;
+  color?: string | null;
   isFeatured?: boolean;
 }
 

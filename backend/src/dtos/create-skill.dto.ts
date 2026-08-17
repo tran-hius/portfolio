@@ -3,6 +3,7 @@ export interface CreateSkillDTO {
   category: string;
   proficiency?: number | null | undefined;
   icon?: string | null | undefined;
+  color?: string | null | undefined;
   order?: number | undefined;
   isFeatured?: boolean | undefined;
 }

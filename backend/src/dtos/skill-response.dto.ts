@@ -5,6 +5,7 @@ export interface SkillResponseDTO {
   category: string;
   proficiency: number | null;
   icon: string | null;
+  color?: string | null;
   order: number;
   isFeatured: boolean;
   createdAt?: Date | string | undefined;
