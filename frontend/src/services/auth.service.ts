@@ -19,19 +19,27 @@ export const authService = {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password: pass }),
+      body: JSON.stringify({ email: email.trim().toLowerCase(), password: pass }),
       credentials: "include",
     });
 
-    const json = await res.json();
-    if (!res.ok) {
-      throw new Error(json.message || "Login failed");
+    const text = await res.text();
+    let json: any;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(`Server connection error (${res.status}): Please check backend URL`);
     }
 
-    if (json.data?.accessToken) {
-      setStoredAuth(json.data.accessToken, json.data.user);
+    if (!res.ok) {
+      throw new Error(json?.message || `Login failed with status ${res.status}`);
     }
-    return json.data;
+
+    const authData = json?.data || json;
+    if (authData?.accessToken) {
+      setStoredAuth(authData.accessToken, authData.user);
+    }
+    return authData;
   },
 
   async refreshToken(): Promise<string> {
@@ -53,28 +61,26 @@ export const authService = {
   },
 
   async getMe(): Promise<AuthUser> {
-    const json = await fetchWithAuth<{ success: boolean; data: AuthUser }>("/auth/me", {
+    const res = await fetchWithAuth<any>("/auth/me", {
       method: "GET",
     });
-    return json.data;
+    return res?.data || res;
   },
 
   async updateProfile(payload: UpdateProfilePayload): Promise<AuthUser> {
-    const json = await fetchWithAuth<{ success: boolean; message: string; data: AuthUser }>(
+    const res = await fetchWithAuth<any>(
       "/auth/profile",
       {
         method: "PUT",
         body: JSON.stringify(payload),
       },
     );
-    if (!json.success || !json.data) {
-      throw new Error(json.message || "Failed to update profile");
-    }
+    const updated = res?.data || res;
     const currentToken = getStoredToken();
-    if (currentToken) {
-      setStoredAuth(currentToken, json.data);
+    if (currentToken && updated) {
+      setStoredAuth(currentToken, updated);
     }
-    return json.data;
+    return updated;
   },
 
   getStoredToken,

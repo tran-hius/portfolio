@@ -4,8 +4,10 @@ import type { Project } from "../types/portfolio.js";
 export const projectService = {
   async fetchProjects(): Promise<Project[]> {
     try {
-      const json = await fetchPublic<{ success: boolean; data: Project[] }>("/projects");
-      return json.data || [];
+      const res = await fetchPublic<any>("/projects");
+      if (Array.isArray(res)) return res;
+      if (Array.isArray(res?.data)) return res.data;
+      return [];
     } catch (err) {
       console.warn("Failed to fetch projects data", err);
       return [];
@@ -13,26 +15,26 @@ export const projectService = {
   },
 
   async createProject(data: Partial<Project>): Promise<Project> {
-    const res = await fetchWithAuth<{ success: boolean; data: Project }>("/projects", {
+    const res = await fetchWithAuth<any>("/projects", {
       method: "POST",
       body: JSON.stringify(data),
     });
-    return res.data;
+    return res?.data || res;
   },
 
   async updateProject(id: string, data: Partial<Project>): Promise<Project> {
-    const res = await fetchWithAuth<{ success: boolean; data: Project }>(`/projects/${id}`, {
+    const res = await fetchWithAuth<any>(`/projects/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
-    return res.data;
+    return res?.data || res;
   },
 
   async deleteProject(id: string): Promise<any> {
-    const res = await fetchWithAuth<{ success: boolean; data: any }>(`/projects/${id}`, {
+    const res = await fetchWithAuth<any>(`/projects/${id}`, {
       method: "DELETE",
     });
-    return res.data;
+    return res?.data || res;
   },
 };
 

@@ -1,5 +1,13 @@
-export const API_BASE =
-  import.meta.env.VITE_API_URL || "https://portfolio-856o.onrender.com/api/v1";
+const getBaseUrl = (): string => {
+  const raw =
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+    "https://portfolio-856o.onrender.com/api/v1";
+
+  const clean = raw.trim().replace(/\/+$/, "");
+  return clean.endsWith("/api/v1") ? clean : `${clean}/api/v1`;
+};
+
+export const API_BASE = getBaseUrl();
 
 export const getCookie = (name: string): string | null => {
   if (typeof document === "undefined") return null;
@@ -100,7 +108,14 @@ export const triggerTokenRefresh = async (): Promise<string> => {
       credentials: "include", 
     });
 
-    const json = await res.json();
+    const text = await res.text();
+    let json: any;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(`Invalid response from auth server (${res.status})`);
+    }
+
     if (!res.ok || !json.data?.accessToken) {
       throw new Error(json.message || "Failed to refresh session");
     }
@@ -134,13 +149,15 @@ export const fetchPublic = async <T = any>(
   const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint}`;
   const response = await fetch(url, options);
 
-  const contentType = response.headers.get("content-type");
+  const text = await response.text();
   let responseData: any;
-
-  if (contentType && contentType.includes("application/json")) {
-    responseData = await response.json();
-  } else {
-    responseData = await response.text();
+  try {
+    responseData = JSON.parse(text);
+  } catch {
+    if (!response.ok) {
+      throw new Error(`Server returned status ${response.status}`);
+    }
+    responseData = text;
   }
 
   if (!response.ok) {
@@ -154,7 +171,7 @@ export const fetchPublic = async <T = any>(
     throw err;
   }
 
-  return responseData?.data !== undefined ? responseData.data : responseData;
+  return responseData;
 };
 
 export const fetchWithAuth = async <T = any>(
@@ -190,13 +207,15 @@ export const fetchWithAuth = async <T = any>(
     }
   }
 
-  const contentType = response.headers.get("content-type");
+  const text = await response.text();
   let responseData: any;
-
-  if (contentType && contentType.includes("application/json")) {
-    responseData = await response.json();
-  } else {
-    responseData = await response.text();
+  try {
+    responseData = JSON.parse(text);
+  } catch {
+    if (!response.ok) {
+      throw new Error(`Server returned status ${response.status}`);
+    }
+    responseData = text;
   }
 
   if (!response.ok) {
@@ -210,5 +229,5 @@ export const fetchWithAuth = async <T = any>(
     throw err;
   }
 
-  return responseData?.data !== undefined ? responseData.data : responseData;
+  return responseData;
 };

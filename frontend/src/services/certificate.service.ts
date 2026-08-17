@@ -4,34 +4,36 @@ import type { Certificate } from "../types/portfolio.js";
 export const certificateService = {
   async fetchCertificates(): Promise<Certificate[]> {
     try {
-      const json = await fetchPublic<{ success: boolean; data: Certificate[] }>("/certificates");
-      return json.data || [];
+      const res = await fetchPublic<any>("/certificates");
+      if (Array.isArray(res)) return res;
+      if (Array.isArray(res?.data)) return res.data;
+      return [];
     } catch {
       return [];
     }
   },
 
   async createCertificate(data: Partial<Certificate>): Promise<Certificate> {
-    const res = await fetchWithAuth<{ success: boolean; data: Certificate }>("/certificates", {
+    const res = await fetchWithAuth<any>("/certificates", {
       method: "POST",
       body: JSON.stringify(data),
     });
-    return res.data;
+    return res?.data || res;
   },
 
   async updateCertificate(id: string, data: Partial<Certificate>): Promise<Certificate> {
-    const res = await fetchWithAuth<{ success: boolean; data: Certificate }>(`/certificates/${id}`, {
+    const res = await fetchWithAuth<any>(`/certificates/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
-    return res.data;
+    return res?.data || res;
   },
 
   async deleteCertificate(id: string): Promise<any> {
-    const res = await fetchWithAuth<{ success: boolean; data: any }>(`/certificates/${id}`, {
+    const res = await fetchWithAuth<any>(`/certificates/${id}`, {
       method: "DELETE",
     });
-    return res.data;
+    return res?.data || res;
   },
 };
 
