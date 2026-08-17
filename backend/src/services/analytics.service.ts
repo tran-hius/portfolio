@@ -81,6 +81,8 @@ export const AnalyticsService = {
       totalVisits,
       uniqueVisitorsToday,
       totalUniqueVisitors,
+      todayUniqueIPs: uniqueVisitorsToday,
+      totalDistinctIPs: totalUniqueVisitors,
     };
   },
 

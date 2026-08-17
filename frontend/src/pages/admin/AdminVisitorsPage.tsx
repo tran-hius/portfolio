@@ -20,11 +20,20 @@ export const AdminVisitorsPage = () => {
   const [page, setPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [stats, setStats] = useState<{ totalDistinctIPs: number; todayUniqueIPs: number }>({
-    totalDistinctIPs: 1,
-    todayUniqueIPs: 1,
+    totalDistinctIPs: 0,
+    todayUniqueIPs: 0,
   });
   const [newLogId, setNewLogId] = useState<string | null>(null);
   const newLogTimer = useRef<number | null>(null);
+
+  const parseStats = (raw: any) => {
+    const today = Number(raw?.todayUniqueIPs ?? raw?.uniqueVisitorsToday ?? 0);
+    const total = Number(raw?.totalDistinctIPs ?? raw?.totalUniqueVisitors ?? 0);
+    return {
+      todayUniqueIPs: isNaN(today) ? 0 : today,
+      totalDistinctIPs: isNaN(total) ? 0 : total,
+    };
+  };
 
   const loadData = async (targetPage: number) => {
     setLoading(true);
@@ -34,7 +43,7 @@ export const AdminVisitorsPage = () => {
       setPage(data.pagination.page);
       setTotalPages(data.pagination.totalPages || 1);
     }
-    if (data?.stats) setStats(data.stats);
+    if (data?.stats) setStats(parseStats(data.stats));
     setLoading(false);
   };
 
@@ -43,7 +52,9 @@ export const AdminVisitorsPage = () => {
 
     const unsubscribe = subscribeAdminVisitorTelemetry({
       onOnlineCount: (count) => {
-        setOnlineCount(count);
+        if (typeof count === "number" && !isNaN(count)) {
+          setOnlineCount(count);
+        }
       },
       onNewLog: (newLog) => {
         const id = newLog._id || newLog.id || String(Date.now());
@@ -59,11 +70,8 @@ export const AdminVisitorsPage = () => {
         });
       },
       onStatsUpdate: (updatedStats) => {
-        setStats((prev) => ({
-          totalDistinctIPs: updatedStats.totalUniqueVisitors ?? updatedStats.totalDistinctIPs ?? prev.totalDistinctIPs,
-          todayUniqueIPs: updatedStats.uniqueVisitorsToday ?? updatedStats.todayUniqueIPs ?? prev.todayUniqueIPs,
-        }));
-        if (typeof updatedStats.activeVisitors === "number") {
+        setStats(parseStats(updatedStats));
+        if (typeof updatedStats?.activeVisitors === "number" && !isNaN(updatedStats.activeVisitors)) {
           setOnlineCount(updatedStats.activeVisitors);
         }
       },

@@ -51,15 +51,31 @@ export const analyticsService = {
 
   async fetchVisitorLogs(page = 1, limit = 20): Promise<VisitorLogsResponse> {
     try {
-      const res = await fetchWithAuth<{ success: boolean; data: VisitorLogsResponse }>(
+      const res = await fetchWithAuth<{ success: boolean; data: any }>(
         `/analytics/visitors?page=${page}&limit=${limit}`,
       );
-      return res.data;
+      const data = res?.data || res;
+      const rawStats = data?.stats || {};
+      const todayUnique = Number(
+        rawStats.todayUniqueIPs ?? rawStats.uniqueVisitorsToday ?? 0,
+      );
+      const totalDistinct = Number(
+        rawStats.totalDistinctIPs ?? rawStats.totalUniqueVisitors ?? 0,
+      );
+
+      return {
+        visitors: Array.isArray(data?.visitors) ? data.visitors : [],
+        pagination: data?.pagination || { total: 0, page: 1, limit: 20, totalPages: 0 },
+        stats: {
+          totalDistinctIPs: isNaN(totalDistinct) ? 0 : totalDistinct,
+          todayUniqueIPs: isNaN(todayUnique) ? 0 : todayUnique,
+        },
+      };
     } catch {
       return {
         visitors: [],
         pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
-        stats: { totalDistinctIPs: 1, todayUniqueIPs: 1 },
+        stats: { totalDistinctIPs: 0, todayUniqueIPs: 0 },
       };
     }
   },

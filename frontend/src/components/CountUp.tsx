@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 interface CountUpProps {
-  value: number | string;
+  value?: number | string | null;
   durationMs?: number;
   decimals?: number;
   prefix?: string;
@@ -15,7 +15,7 @@ const easeOutExpo = (t: number): number => {
 };
 
 export const CountUp: React.FC<CountUpProps> = ({
-  value,
+  value = 0,
   durationMs = 1400,
   decimals,
   prefix = "",
@@ -32,32 +32,39 @@ export const CountUp: React.FC<CountUpProps> = ({
   let detectedSuffix = suffix;
   let detectedDecimals = decimals;
 
-  if (typeof value === "number") {
-    targetNum = value;
+  if (value === undefined || value === null) {
+    targetNum = 0;
+  } else if (typeof value === "number") {
+    targetNum = isNaN(value) ? 0 : value;
     if (detectedDecimals === undefined) {
-      detectedDecimals = Number.isInteger(value) ? 0 : 1;
+      detectedDecimals = Number.isInteger(targetNum) ? 0 : 1;
     }
   } else {
     const str = String(value).trim();
-    // Check for leading characters like "< ", "> ", "$"
-    const prefixMatch = str.match(/^[^\d.]+/);
-    if (prefixMatch && !prefix) {
-      detectedPrefix = prefixMatch[0];
-    }
+    if (str === "undefined" || str === "null" || str === "NaN" || str === "") {
+      targetNum = 0;
+    } else {
+      // Check for leading characters like "< ", "> ", "$"
+      const prefixMatch = str.match(/^[^\d.]+/);
+      if (prefixMatch && !prefix) {
+        detectedPrefix = prefixMatch[0];
+      }
 
-    // Check for trailing characters like "+", "%", "ms", "k"
-    const suffixMatch = str.match(/[^\d.]+$/);
-    if (suffixMatch && !suffix) {
-      detectedSuffix = suffixMatch[0];
-    }
+      // Check for trailing characters like "+", "%", "ms", "k"
+      const suffixMatch = str.match(/[^\d.]+$/);
+      if (suffixMatch && !suffix) {
+        detectedSuffix = suffixMatch[0];
+      }
 
-    // Extract numeric part
-    const numMatch = str.match(/[\d.]+/);
-    if (numMatch) {
-      targetNum = parseFloat(numMatch[0]);
-      if (detectedDecimals === undefined) {
-        const dotIndex = numMatch[0].indexOf(".");
-        detectedDecimals = dotIndex >= 0 ? numMatch[0].length - dotIndex - 1 : 0;
+      // Extract numeric part
+      const numMatch = str.match(/[\d.]+/);
+      if (numMatch) {
+        const parsed = parseFloat(numMatch[0]);
+        targetNum = isNaN(parsed) ? 0 : parsed;
+        if (detectedDecimals === undefined) {
+          const dotIndex = numMatch[0].indexOf(".");
+          detectedDecimals = dotIndex >= 0 ? numMatch[0].length - dotIndex - 1 : 0;
+        }
       }
     }
   }
@@ -77,9 +84,6 @@ export const CountUp: React.FC<CountUpProps> = ({
     let animationFrameId: number;
 
     const startCounting = () => {
-      if (hasAnimatedRef.current) return;
-      hasAnimatedRef.current = true;
-
       const startTime = performance.now();
 
       const updateCounter = (currentTime: number) => {
@@ -100,20 +104,28 @@ export const CountUp: React.FC<CountUpProps> = ({
       animationFrameId = requestAnimationFrame(updateCounter);
     };
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry && entry.isIntersecting) {
-          startCounting();
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
-    );
+    if (hasAnimatedRef.current) {
+      startCounting();
+    } else {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry && entry.isIntersecting) {
+            hasAnimatedRef.current = true;
+            startCounting();
+            observer.unobserve(el);
+          }
+        },
+        { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
+      );
+      observer.observe(el);
 
-    observer.observe(el);
+      return () => {
+        observer.disconnect();
+        cancelAnimationFrame(animationFrameId);
+      };
+    }
 
     return () => {
-      observer.disconnect();
       cancelAnimationFrame(animationFrameId);
     };
   }, [targetNum, durationMs, effectiveDecimals]);

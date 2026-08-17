@@ -33,15 +33,28 @@ export const AdminOverviewPage = () => {
   const [skillCount, setSkillCount] = useState<number>(0);
   const [experienceCount, setExperienceCount] = useState<number>(0);
   const [visitorStats, setVisitorStats] = useState<{ totalDistinctIPs: number; todayUniqueIPs: number }>({
-    totalDistinctIPs: 1,
-    todayUniqueIPs: 1,
+    totalDistinctIPs: 0,
+    todayUniqueIPs: 0,
   });
   const [recentVisitors, setRecentVisitors] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
 
   useEffect(() => {
+    const parseStats = (raw: any) => {
+      const today = Number(raw?.todayUniqueIPs ?? raw?.uniqueVisitorsToday ?? 0);
+      const total = Number(raw?.totalDistinctIPs ?? raw?.totalUniqueVisitors ?? 0);
+      return {
+        todayUniqueIPs: isNaN(today) ? 0 : today,
+        totalDistinctIPs: isNaN(total) ? 0 : total,
+      };
+    };
+
     const unsubscribe = subscribeAdminVisitorTelemetry({
-      onOnlineCount: (count) => setOnlineCount(count),
+      onOnlineCount: (count) => {
+        if (typeof count === "number" && !isNaN(count)) {
+          setOnlineCount(count);
+        }
+      },
       onNewLog: (newLog) => {
         setRecentVisitors((prev) => [
           newLog,
@@ -49,26 +62,23 @@ export const AdminOverviewPage = () => {
         ].slice(0, 8));
       },
       onStatsUpdate: (stats) => {
-        setVisitorStats((prev) => ({
-          totalDistinctIPs: stats.totalUniqueVisitors ?? stats.totalDistinctIPs ?? prev.totalDistinctIPs,
-          todayUniqueIPs: stats.uniqueVisitorsToday ?? stats.todayUniqueIPs ?? prev.todayUniqueIPs,
-        }));
-        if (typeof stats.activeVisitors === "number") {
+        setVisitorStats(parseStats(stats));
+        if (typeof stats?.activeVisitors === "number" && !isNaN(stats.activeVisitors)) {
           setOnlineCount(stats.activeVisitors);
         }
       },
     });
 
-    fetchProjects().then((data) => setProjectCount(data.length));
+    fetchProjects().then((data) => setProjectCount(data?.length || 0));
     fetchSkills().then((data) => {
-      const all = Object.values(data).flat();
+      const all = Object.values(data || {}).flat();
       setSkillCount(all.length);
     });
-    fetchExperiences().then((data) => setExperienceCount(data.length));
+    fetchExperiences().then((data) => setExperienceCount(data?.length || 0));
     fetchSystemMetrics().then((data) => setMetrics(data));
     fetchVisitorLogs(1, 8).then((res) => {
       if (res?.visitors) setRecentVisitors(res.visitors);
-      if (res?.stats) setVisitorStats(res.stats);
+      if (res?.stats) setVisitorStats(parseStats(res.stats));
     });
 
     const interval = setInterval(() => {
