@@ -52,7 +52,7 @@ export const AdminProjectsPage = () => {
     setTechnologiesStr("");
     setGithubUrl("");
     setLiveUrl("");
-    setCategory("Architecture");
+    setCategory("Web Application");
     setIsFeatured(false);
     setImageUrl("");
     setError(null);
@@ -65,10 +65,10 @@ export const AdminProjectsPage = () => {
     setDescription(project.description);
     setTechnologiesStr(project.technologies.join(", "));
     setGithubUrl(project.githubUrl || "");
-    setLiveUrl(project.liveUrl || "");
-    setCategory(project.category || "Architecture");
+    setLiveUrl(project.liveUrl || project.demoUrl || "");
+    setCategory(project.category || "Web Application");
     setIsFeatured(!!project.isFeatured);
-    setImageUrl(project.imageUrl || "");
+    setImageUrl(project.imageUrl || project.thumbnail || "");
     setError(null);
     setIsModalOpen(true);
   };
@@ -89,7 +89,6 @@ export const AdminProjectsPage = () => {
     } finally {
       setUploadingImage(false);
     }
-
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -101,15 +100,20 @@ export const AdminProjectsPage = () => {
       .map((t) => t.trim())
       .filter(Boolean);
 
+    const finalImage = imageUrl.trim() || null;
+    const finalLive = liveUrl.trim() || null;
+
     const payload: Partial<Project> = {
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       technologies: techArray,
-      githubUrl: githubUrl || undefined,
-      liveUrl: liveUrl || undefined,
-      category,
+      githubUrl: githubUrl.trim() || null,
+      liveUrl: finalLive,
+      demoUrl: finalLive,
+      category: category.trim() || "Web Application",
       isFeatured,
-      imageUrl: imageUrl || undefined,
+      imageUrl: finalImage,
+      thumbnail: finalImage,
     };
 
     try {
@@ -181,12 +185,24 @@ export const AdminProjectsPage = () => {
                 projects.map((p) => (
                   <tr key={p._id} className="hover:bg-white/[0.02]">
                     <td className="py-4 text-white font-medium max-w-xs">
-                      <div className="font-sans font-bold text-sm text-white mb-0.5 flex items-center gap-2">
-                        <FolderSpecialRoundedIcon sx={{ fontSize: 16, color: "#38bdf8" }} />
-                        <span>{p.title}</span>
+                      <div className="flex items-center gap-3">
+                        {p.imageUrl || p.thumbnail ? (
+                          <img
+                            src={p.imageUrl || p.thumbnail || ""}
+                            alt={p.title}
+                            className="w-12 h-9 object-cover rounded-lg border border-white/10 shrink-0 shadow-sm"
+                          />
+                        ) : (
+                          <div className="w-12 h-9 rounded-lg bg-surface-100 border border-white/10 flex items-center justify-center shrink-0 text-cyan-400">
+                            <FolderSpecialRoundedIcon sx={{ fontSize: 16 }} />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-sans font-bold text-sm text-white mb-0.5 truncate">{p.title}</div>
+                          <div className="text-muted text-[11px] truncate max-w-[180px]">{p.description}</div>
+                        </div>
                       </div>
-                      <div className="text-muted text-[11px] truncate max-w-xs">{p.description}</div>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1.5 ml-15">
                         {p.githubUrl && (
                           <a
                             href={p.githubUrl}
@@ -198,9 +214,9 @@ export const AdminProjectsPage = () => {
                             <span className="text-[10px]">Code</span>
                           </a>
                         )}
-                        {p.liveUrl && (
+                        {(p.liveUrl || p.demoUrl) && (
                           <a
-                            href={p.liveUrl}
+                            href={p.liveUrl || p.demoUrl || "#"}
                             target="_blank"
                             rel="noreferrer"
                             className="text-cyan-400 hover:underline flex items-center gap-0.5"
@@ -211,7 +227,7 @@ export const AdminProjectsPage = () => {
                         )}
                       </div>
                     </td>
-                    <td className="py-4 text-cyan-300">{p.category || "Architecture"}</td>
+                    <td className="py-4 text-cyan-300 font-medium">{p.category || "Web Application"}</td>
                     <td className="py-4 text-muted max-w-xs">
                       <div className="flex flex-wrap gap-1">
                         {p.technologies.slice(0, 3).map((t) => (
@@ -316,11 +332,21 @@ export const AdminProjectsPage = () => {
                   <label className="block text-muted mb-1">Category</label>
                   <input
                     type="text"
+                    list="project-category-suggestions"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    placeholder="e.g. Architecture, Backend, AI"
+                    placeholder="e.g. Web Application, Architecture, AI"
                     className="w-full px-3.5 py-2 rounded-xl bg-surface-100 border border-white/[0.08] text-white focus:outline-none focus:border-cyan-400"
                   />
+                  <datalist id="project-category-suggestions">
+                    <option value="Web Application" />
+                    <option value="Full-Stack System" />
+                    <option value="Architecture" />
+                    <option value="Backend & APIs" />
+                    <option value="Mobile App" />
+                    <option value="AI & Machine Learning" />
+                    <option value="DevOps & Cloud" />
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-muted mb-1">Technologies (Comma-separated)</label>
@@ -359,7 +385,7 @@ export const AdminProjectsPage = () => {
               </div>
 
               <div>
-                <label className="block text-muted mb-1">Project Media / Cloudinary Image</label>
+                <label className="block text-muted mb-1">Project Media / Thumbnail Image</label>
                 <div className="flex items-center gap-3">
                   <label className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.08] cursor-pointer flex items-center gap-2">
                     <CloudUploadRoundedIcon sx={{ fontSize: 16 }} />
@@ -371,11 +397,27 @@ export const AdminProjectsPage = () => {
                       className="hidden"
                     />
                   </label>
-                  {uploadingImage && <span className="text-cyan-400">Uploading to Cloudinary...</span>}
+                  {uploadingImage && <span className="text-cyan-400 animate-pulse">Uploading to Cloudinary...</span>}
                 </div>
                 {imageUrl && (
-                  <div className="mt-2 text-[11px] text-cyan-300 truncate">
-                    Uploaded: {imageUrl}
+                  <div className="mt-3 flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                    <img
+                      src={imageUrl}
+                      alt="Preview"
+                      className="w-20 h-14 object-cover rounded-lg border border-cyan-500/30 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] text-emerald-400 font-semibold mb-0.5">✓ Uploaded Image Ready</div>
+                      <div className="text-[11px] text-muted truncate">{imageUrl}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="text-muted hover:text-rose-400 p-1.5 rounded-lg hover:bg-white/[0.05] cursor-pointer"
+                      title="Remove image"
+                    >
+                      <CloseRoundedIcon sx={{ fontSize: 16 }} />
+                    </button>
                   </div>
                 )}
               </div>

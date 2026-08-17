@@ -42,8 +42,16 @@ export const ProjectService = {
       throw new BadRequestError("Title and description are required");
     }
 
+    const image = data.imageUrl || data.thumbnail || null;
+    const live = data.liveUrl || data.demoUrl || null;
+
     const newProject = await projectRepository.create({
       ...data,
+      category: data.category?.trim() || "Architecture",
+      thumbnail: image,
+      imageUrl: image,
+      demoUrl: live,
+      liveUrl: live,
       userId,
     });
 
@@ -127,7 +135,25 @@ export const ProjectService = {
       );
     }
 
-    const updated = await projectRepository.updateById(id, data);
+    const updatePayload: any = { ...data };
+
+    if (data.imageUrl !== undefined || data.thumbnail !== undefined) {
+      const img = data.imageUrl !== undefined ? data.imageUrl : data.thumbnail;
+      updatePayload.imageUrl = img;
+      updatePayload.thumbnail = img;
+    }
+
+    if (data.liveUrl !== undefined || data.demoUrl !== undefined) {
+      const live = data.liveUrl !== undefined ? data.liveUrl : data.demoUrl;
+      updatePayload.liveUrl = live;
+      updatePayload.demoUrl = live;
+    }
+
+    if (data.category !== undefined) {
+      updatePayload.category = data.category ? String(data.category).trim() : "Architecture";
+    }
+
+    const updated = await projectRepository.updateById(id, updatePayload);
     return ProjectMapper.toResponse(updated);
   },
 

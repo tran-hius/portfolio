@@ -21,7 +21,18 @@ const projectSchema = new Schema(
       trim: true,
     },
 
+    category: {
+      type: String,
+      default: "Architecture",
+      trim: true,
+    },
+
     thumbnail: {
+      type: String,
+      default: null,
+    },
+
+    imageUrl: {
       type: String,
       default: null,
     },
@@ -37,6 +48,11 @@ const projectSchema = new Schema(
     },
 
     demoUrl: {
+      type: String,
+      default: null,
+    },
+
+    liveUrl: {
       type: String,
       default: null,
     },
