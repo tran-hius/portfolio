@@ -15,9 +15,9 @@ Tạo file `.env` trên server production dựa theo template `.env.production.e
 | `JWT_REFRESH_SECRET` | Khóa bí mật ký Refresh Token (min 32 ký tự) | Tạo bằng `openssl rand -base64 32` |
 | `ADMIN_EMAIL` | Email đăng nhập Admin duy nhất | `admin@tranhieu.dev` |
 | `ADMIN_PASSWORD` | Mật khẩu tài khoản Master Admin khởi tạo | `StrongPassword@2026!` |
-| `CLOUDINARY_CLOUD_NAME`| Tên cloud Cloudinary lưu ảnh | `digfoub3d` |
-| `CLOUDINARY_API_KEY` | API Key Cloudinary | `687752919341867` |
-| `CLOUDINARY_API_SECRET` | API Secret Cloudinary | `3Kdbtvr...` |
+| `CLOUDINARY_CLOUD_NAME`| Tên cloud Cloudinary lưu ảnh | `your_cloudinary_cloud_name` |
+| `CLOUDINARY_API_KEY` | API Key Cloudinary | `your_cloudinary_api_key` |
+| `CLOUDINARY_API_SECRET` | API Secret Cloudinary | `your_cloudinary_api_secret` |
 | `CORS_ORIGIN` | Các domain được phép gọi API (cách nhau dấu phẩy) | `https://tranhieu.dev,https://www.tranhieu.dev` |
 | `VITE_API_URL` | Đường dẫn Backend API cho Frontend | `https://api.tranhieu.dev/api/v1` |
 
