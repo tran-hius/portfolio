@@ -23,10 +23,10 @@ services:
     environment:
       PORT: 3001
       MONGO_URI: mongodb://mongodb:27017/portfolio
-      JWT_ACCESS_SECRET: your-super-secret-access-key
-      JWT_REFRESH_SECRET: your-super-secret-refresh-key
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@tranhieu.dev}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@123456}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}

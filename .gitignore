@@ -1,9 +1,12 @@
 node_modules/
 .env
-.env*
 .env.*
+!.env*.example
+!.env.example
 backend/.env*
+!backend/.env*.example
 frontend/.env*
+!frontend/.env*.example
 dist/
 build/
 .DS_Store
