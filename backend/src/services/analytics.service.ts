@@ -16,9 +16,10 @@ export const AnalyticsService = {
   
   async logVisit(data: CreateVisitorDTO) {
     try {
-      await visitorRepository.create(data);
+      return await visitorRepository.create(data);
     } catch (error) {
       console.error("Failed to log visitor:", error);
+      return null;
     }
   },
 

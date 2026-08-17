@@ -6,7 +6,7 @@ import {
   fetchExperiences,
   fetchVisitorLogs,
   fetchSystemMetrics,
-  subscribeToRealtimeVisitors,
+  subscribeAdminVisitorTelemetry,
 } from "../../services/api.js";
 import type { SystemMetrics } from "../../types/portfolio.js";
 import WifiTetheringRoundedIcon from "@mui/icons-material/WifiTetheringRounded";
@@ -39,7 +39,24 @@ export const AdminOverviewPage = () => {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
 
   useEffect(() => {
-    const unsubscribe = subscribeToRealtimeVisitors((count) => setOnlineCount(count));
+    const unsubscribe = subscribeAdminVisitorTelemetry({
+      onOnlineCount: (count) => setOnlineCount(count),
+      onNewLog: (newLog) => {
+        setRecentVisitors((prev) => [
+          newLog,
+          ...prev.filter((v) => (v._id || v.id) !== (newLog._id || newLog.id)),
+        ].slice(0, 8));
+      },
+      onStatsUpdate: (stats) => {
+        setVisitorStats((prev) => ({
+          totalDistinctIPs: stats.totalUniqueVisitors ?? stats.totalDistinctIPs ?? prev.totalDistinctIPs,
+          todayUniqueIPs: stats.uniqueVisitorsToday ?? stats.todayUniqueIPs ?? prev.todayUniqueIPs,
+        }));
+        if (typeof stats.activeVisitors === "number") {
+          setOnlineCount(stats.activeVisitors);
+        }
+      },
+    });
 
     fetchProjects().then((data) => setProjectCount(data.length));
     fetchSkills().then((data) => {

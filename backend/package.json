@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "seed:admin": "tsx src/scripts/seed-admin.ts",
+    "test:socket": "tsx src/scripts/test-realtime-sockets.ts",
     "debug": "node --import tsx --inspect-brk=0.0.0.0:9229 src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
-
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tran-hius/portfolio.git"
@@ -39,11 +39,13 @@
     "http-errors": "^2.0.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "9.2.2",
+    "socket.io": "^4.8.3",
     "typescript": "7.0.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/http-errors": "^2.0.5",
+    "socket.io-client": "^4.8.3",
     "tsx": "^4.23.12"
   }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { subscribeToRealtimeVisitors } from "../services/analytics.service.js";
+import { subscribeOnlineVisitors, trackPageView } from "../services/socket.service.js";
 import { useTheme } from "../hooks/useTheme.js";
 
 export const Navbar = () => {
@@ -31,6 +31,8 @@ export const Navbar = () => {
     if (unlockTimer.current) {
       clearTimeout(unlockTimer.current);
     }
+
+    trackPageView(`/#${targetId}`);
 
     if (targetId === "hero") {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -98,7 +100,7 @@ export const Navbar = () => {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    const unsubscribe = subscribeToRealtimeVisitors((count) => {
+    const unsubscribe = subscribeOnlineVisitors((count) => {
       setOnlineCount(count);
     });
 

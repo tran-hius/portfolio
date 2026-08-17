@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   fetchVisitorLogs,
-  subscribeToRealtimeVisitors,
+  subscribeAdminVisitorTelemetry,
 } from "../../services/api.js";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import WifiTetheringRoundedIcon from "@mui/icons-material/WifiTetheringRounded";
@@ -23,6 +23,8 @@ export const AdminVisitorsPage = () => {
     totalDistinctIPs: 1,
     todayUniqueIPs: 1,
   });
+  const [newLogId, setNewLogId] = useState<string | null>(null);
+  const newLogTimer = useRef<number | null>(null);
 
   const loadData = async (targetPage: number) => {
     setLoading(true);
@@ -39,20 +41,53 @@ export const AdminVisitorsPage = () => {
   useEffect(() => {
     loadData(page);
 
-    const unsubscribe = subscribeToRealtimeVisitors((count) => {
-      setOnlineCount(count);
+    const unsubscribe = subscribeAdminVisitorTelemetry({
+      onOnlineCount: (count) => {
+        setOnlineCount(count);
+      },
+      onNewLog: (newLog) => {
+        const id = newLog._id || newLog.id || String(Date.now());
+        setNewLogId(id);
+        if (newLogTimer.current) clearTimeout(newLogTimer.current);
+        newLogTimer.current = window.setTimeout(() => {
+          setNewLogId(null);
+        }, 3000);
+
+        setVisitors((prev) => {
+          const filtered = prev.filter((v) => (v._id || v.id) !== (newLog._id || newLog.id));
+          return [newLog, ...filtered].slice(0, 15);
+        });
+      },
+      onStatsUpdate: (updatedStats) => {
+        setStats((prev) => ({
+          totalDistinctIPs: updatedStats.totalUniqueVisitors ?? updatedStats.totalDistinctIPs ?? prev.totalDistinctIPs,
+          todayUniqueIPs: updatedStats.uniqueVisitorsToday ?? updatedStats.todayUniqueIPs ?? prev.todayUniqueIPs,
+        }));
+        if (typeof updatedStats.activeVisitors === "number") {
+          setOnlineCount(updatedStats.activeVisitors);
+        }
+      },
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (newLogTimer.current) clearTimeout(newLogTimer.current);
+    };
   }, [page]);
 
   return (
     <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border-subtle">
         <div>
-          <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider block mb-1">
-            CMS // Realtime Observability
-          </span>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider block">
+              CMS // Realtime Observability
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live Socket Active
+            </span>
+          </div>
           <h1 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
             Visitor IP Intelligence & Telemetry
           </h1>
@@ -81,7 +116,7 @@ export const AdminVisitorsPage = () => {
             </span>
           </div>
           <p className="text-xs font-mono text-muted mt-4 border-t border-white/[0.06] pt-3">
-            Active SSE client connections
+            Active Socket & Realtime Connections
           </p>
         </div>
 
@@ -139,29 +174,44 @@ export const AdminVisitorsPage = () => {
                   </td>
                 </tr>
               ) : visitors.length > 0 ? (
-                visitors.map((v, i) => (
-                  <tr key={v._id || i} className="hover:bg-white/[0.02]">
-                    <td className="py-4 text-cyan-300 font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <LanguageRoundedIcon sx={{ fontSize: 14, color: "#38bdf8" }} />
-                        <span>{v.ip}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 text-white">{v.path || "/"}</td>
-                    <td className="py-4 text-muted max-w-sm truncate">
-                      <div className="flex items-center gap-1.5">
-                        <DesktopWindowsRoundedIcon sx={{ fontSize: 14, color: "#64748b" }} />
-                        <span>{v.userAgent || "Unknown Browser"}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 text-muted text-right">
-                      <div className="inline-flex items-center gap-1">
-                        <AccessTimeRoundedIcon sx={{ fontSize: 12, color: "#64748b" }} />
-                        <span>{v.visitedAt ? new Date(v.visitedAt).toLocaleString() : "Recent"}</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                visitors.map((v, i) => {
+                  const isNew = newLogId && (v._id || v.id) === newLogId;
+                  return (
+                    <tr
+                      key={v._id || i}
+                      className={`transition-colors duration-500 ${
+                        isNew
+                          ? "bg-emerald-500/15 border-l-4 border-emerald-400"
+                          : "hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      <td className="py-4 text-cyan-300 font-medium">
+                        <div className="flex items-center gap-1.5">
+                          <LanguageRoundedIcon sx={{ fontSize: 14, color: isNew ? "#34d399" : "#38bdf8" }} />
+                          <span>{v.ip}</span>
+                          {isNew && (
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] bg-emerald-500/20 text-emerald-300 font-semibold uppercase">
+                              New
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 text-white">{v.path || "/"}</td>
+                      <td className="py-4 text-muted max-w-sm truncate">
+                        <div className="flex items-center gap-1.5">
+                          <DesktopWindowsRoundedIcon sx={{ fontSize: 14, color: "#64748b" }} />
+                          <span>{v.userAgent || "Unknown Browser"}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 text-muted text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <AccessTimeRoundedIcon sx={{ fontSize: 12, color: "#64748b" }} />
+                          <span>{v.visitedAt ? new Date(v.visitedAt).toLocaleString() : "Recent"}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={4} className="py-8 text-center text-muted">

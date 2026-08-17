@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import http from "http";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -20,6 +21,7 @@ import uploadRouter from "./routers/upload.routes.js";
 import { requestLogger } from "./middlewares/logger.middleware.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { AuthService } from "./services/auth.service.js";
+import { SocketService } from "./services/socket.service.js";
 import { Logger } from "./utils/logger.util.js";
 
 
@@ -106,8 +108,10 @@ const startServer = async () => {
     Logger.error("MongoDB connection notice (will auto-reconnect):", error);
   }
 
+  const httpServer = http.createServer(app);
+  SocketService.init(httpServer);
 
-  const server = app.listen(PORT, () => {
+  const server = httpServer.listen(PORT, () => {
     Logger.info(`Server is running on port: ${PORT} (http://localhost:${PORT})`);
   });
 

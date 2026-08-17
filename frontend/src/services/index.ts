@@ -8,3 +8,4 @@ export * from "./certificate.service.js";
 export * from "./upload.service.js";
 export * from "./analytics.service.js";
 export * from "./system.service.js";
+export * from "./socket.service.js";
