@@ -15,6 +15,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded";
+import { ConfirmDeleteModal } from "../../components/ConfirmDeleteModal.js";
 
 const PRESET_COLORS = [
   { label: "React Blue", hex: "#61DAFB" },
@@ -127,14 +128,20 @@ export const AdminSkillsPage = () => {
     }
   };
 
-  const handleDelete = async (id?: string) => {
-    if (!id) return;
-    if (!window.confirm("Are you sure you want to delete this skill?")) return;
+  const [deletingSkill, setDeletingSkill] = useState<Skill | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const confirmDelete = async () => {
+    if (!deletingSkill?._id) return;
+    setIsDeleting(true);
     try {
-      await deleteSkill(id);
+      await deleteSkill(deletingSkill._id);
+      setDeletingSkill(null);
       loadSkills();
     } catch (err: any) {
       alert(err.message || "Failed to delete skill");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -251,7 +258,7 @@ export const AdminSkillsPage = () => {
                           <EditRoundedIcon sx={{ fontSize: 16 }} />
                         </button>
                         <button
-                          onClick={() => handleDelete(s._id)}
+                          onClick={() => setDeletingSkill(s)}
                           className="p-1.5 rounded-md hover:bg-rose-500/20 text-muted hover:text-rose-300 text-xs cursor-pointer"
                           title="Delete Skill"
                         >
@@ -445,6 +452,17 @@ export const AdminSkillsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingSkill)}
+        title="Delete Skill"
+        itemName={deletingSkill?.name}
+        itemType="Skill"
+        isDeleting={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingSkill(null)}
+      />
     </div>
   );
 };

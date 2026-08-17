@@ -16,6 +16,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import FolderSpecialRoundedIcon from "@mui/icons-material/FolderSpecialRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import { ConfirmDeleteModal } from "../../components/ConfirmDeleteModal.js";
 
 export const AdminProjectsPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -129,15 +130,20 @@ export const AdminProjectsPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to permanently delete this project?")) {
-      return;
-    }
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const confirmDelete = async () => {
+    if (!deletingProject) return;
+    setIsDeleting(true);
     try {
-      await deleteProject(id);
+      await deleteProject(deletingProject._id);
+      setDeletingProject(null);
       loadProjects();
     } catch (err: any) {
       alert(err.message || "Failed to delete project");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -259,7 +265,7 @@ export const AdminProjectsPage = () => {
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={() => handleDelete(p._id)}
+                        onClick={() => setDeletingProject(p)}
                         className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs border border-rose-500/20 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
@@ -454,6 +460,17 @@ export const AdminProjectsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingProject)}
+        title="Delete Project"
+        itemName={deletingProject?.title}
+        itemType="Project"
+        isDeleting={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingProject(null)}
+      />
     </div>
   );
 };

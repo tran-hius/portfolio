@@ -13,6 +13,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
+import { ConfirmDeleteModal } from "../../components/ConfirmDeleteModal.js";
 
 const formatDateForInput = (val?: string | Date | null): string => {
   if (!val) return "";
@@ -123,14 +124,20 @@ export const AdminExperiencesPage = () => {
     }
   };
 
-  const handleDelete = async (id?: string) => {
-    if (!id) return;
-    if (!window.confirm("Delete this experience entry?")) return;
+  const [deletingExp, setDeletingExp] = useState<Experience | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const confirmDelete = async () => {
+    if (!deletingExp?._id) return;
+    setIsDeleting(true);
     try {
-      await deleteExperience(id);
+      await deleteExperience(deletingExp._id);
+      setDeletingExp(null);
       loadData();
     } catch (err: any) {
       alert(err.message || "Failed to delete experience");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -215,7 +222,7 @@ export const AdminExperiencesPage = () => {
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={() => handleDelete(exp._id)}
+                        onClick={() => setDeletingExp(exp)}
                         className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs border border-rose-500/20 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
@@ -374,6 +381,17 @@ export const AdminExperiencesPage = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingExp)}
+        title="Delete Experience Entry"
+        itemName={deletingExp ? `${deletingExp.position} at ${deletingExp.company}` : undefined}
+        itemType="Experience"
+        isDeleting={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingExp(null)}
+      />
     </div>
   );
 };

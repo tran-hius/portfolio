@@ -13,6 +13,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
+import { ConfirmDeleteModal } from "../../components/ConfirmDeleteModal.js";
 
 const formatDateForInput = (val?: string | Date | null): string => {
   if (!val) return "";
@@ -106,14 +107,20 @@ export const AdminCertificatesPage = () => {
     }
   };
 
-  const handleDelete = async (id?: string) => {
-    if (!id) return;
-    if (!window.confirm("Delete this certificate record?")) return;
+  const [deletingCert, setDeletingCert] = useState<Certificate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const confirmDelete = async () => {
+    if (!deletingCert?._id) return;
+    setIsDeleting(true);
     try {
-      await deleteCertificate(id);
+      await deleteCertificate(deletingCert._id);
+      setDeletingCert(null);
       loadData();
     } catch (err: any) {
       alert(err.message || "Failed to delete certificate");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -195,7 +202,7 @@ export const AdminCertificatesPage = () => {
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={() => handleDelete(cert._id)}
+                        onClick={() => setDeletingCert(cert)}
                         className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs border border-rose-500/20 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
@@ -317,6 +324,17 @@ export const AdminCertificatesPage = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingCert)}
+        title="Delete Certificate Record"
+        itemName={deletingCert?.title}
+        itemType="Certificate"
+        isDeleting={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingCert(null)}
+      />
     </div>
   );
 };

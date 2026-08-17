@@ -13,6 +13,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
 import GradeRoundedIcon from "@mui/icons-material/GradeRounded";
+import { ConfirmDeleteModal } from "../../components/ConfirmDeleteModal.js";
 
 const formatDateForInput = (val?: string | Date | null): string => {
   if (!val) return "";
@@ -118,14 +119,20 @@ export const AdminEducationPage = () => {
     }
   };
 
-  const handleDelete = async (id?: string) => {
-    if (!id) return;
-    if (!window.confirm("Delete this education entry?")) return;
+  const [deletingEdu, setDeletingEdu] = useState<Education | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const confirmDelete = async () => {
+    if (!deletingEdu?._id) return;
+    setIsDeleting(true);
     try {
-      await deleteEducation(id);
+      await deleteEducation(deletingEdu._id);
+      setDeletingEdu(null);
       loadData();
     } catch (err: any) {
       alert(err.message || "Failed to delete education record");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -202,7 +209,7 @@ export const AdminEducationPage = () => {
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={() => handleDelete(edu._id)}
+                        onClick={() => setDeletingEdu(edu)}
                         className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs border border-rose-500/20 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
@@ -361,6 +368,17 @@ export const AdminEducationPage = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(deletingEdu)}
+        title="Delete Education Record"
+        itemName={deletingEdu ? `${deletingEdu.degree} - ${deletingEdu.institution}` : undefined}
+        itemType="Education Record"
+        isDeleting={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingEdu(null)}
+      />
     </div>
   );
 };
