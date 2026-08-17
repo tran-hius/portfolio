@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { fetchSkills } from "../services/skill.service.js";
 import { Reveal } from "./Reveal.js";
+import { CountUp } from "./CountUp.js";
 import { getTechBrandColor } from "../utils/brandColors.js";
 import type { Skill } from "../types/portfolio.js";
 
@@ -205,12 +206,12 @@ export const Skills = () => {
                             className="font-medium"
                             style={{ color: brandColor }}
                           >
-                            {skill.proficiency}%
+                            <CountUp value={skill.proficiency} suffix="%" durationMs={1200} />
                           </span>
                         </div>
                         <div className="w-full h-1 rounded-full bg-surface-200 dark:bg-slate-800 overflow-hidden">
                           <div
-                            className="h-full rounded-full transition-all duration-500"
+                            className="h-full rounded-full transition-all duration-1000 ease-out"
                             style={{
                               width: `${Math.min(100, skill.proficiency)}%`,
                               backgroundColor: brandColor,

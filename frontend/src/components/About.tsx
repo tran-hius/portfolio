@@ -1,4 +1,5 @@
 import { Reveal } from "./Reveal.js";
+import { CountUp } from "./CountUp.js";
 
 export const About = () => {
   const stats = [
@@ -51,7 +52,7 @@ export const About = () => {
               <div className="glass-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between h-full shadow-sm">
                 <div>
                   <span className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-slate-900 dark:text-white tracking-tight block mb-2">
-                    {stat.value}
+                    <CountUp value={stat.value} durationMs={1500} />
                   </span>
                   <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-300 block mb-1">
                     {stat.label}

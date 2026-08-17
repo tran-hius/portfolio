@@ -8,6 +8,7 @@ import {
   fetchSystemMetrics,
   subscribeAdminVisitorTelemetry,
 } from "../../services/api.js";
+import { CountUp } from "../../components/CountUp.js";
 import type { SystemMetrics } from "../../types/portfolio.js";
 import WifiTetheringRoundedIcon from "@mui/icons-material/WifiTetheringRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
@@ -108,13 +109,13 @@ export const AdminOverviewPage = () => {
         <div className="glass-card p-6 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-mono text-muted uppercase">Realtime Online</span>
+              <span className="text-xs font-mono text-muted uppercase">Realtime Live Users</span>
               <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <WifiTetheringRoundedIcon sx={{ fontSize: 18 }} />
               </div>
             </div>
-            <span className="text-3xl sm:text-4xl font-display font-bold text-emerald-400 block">
-              {onlineCount}
+            <span className="text-3xl sm:text-4xl font-display font-bold text-white block">
+              <CountUp value={onlineCount} durationMs={1000} />
             </span>
           </div>
           <p className="text-xs font-mono text-muted mt-4 border-t border-white/[0.06] pt-3">
@@ -131,11 +132,11 @@ export const AdminOverviewPage = () => {
               </div>
             </div>
             <span className="text-3xl sm:text-4xl font-display font-bold text-cyan-300 block">
-              {visitorStats.todayUniqueIPs}
+              <CountUp value={visitorStats.todayUniqueIPs} durationMs={1200} />
             </span>
           </div>
           <p className="text-xs font-mono text-muted mt-4 border-t border-white/[0.06] pt-3">
-            Total Unique IPs: {visitorStats.totalDistinctIPs}
+            Total Unique IPs: <CountUp value={visitorStats.totalDistinctIPs} durationMs={1200} />
           </p>
         </div>
 
@@ -148,7 +149,7 @@ export const AdminOverviewPage = () => {
               </div>
             </div>
             <span className="text-3xl sm:text-4xl font-display font-bold text-white block">
-              {projectCount}
+              <CountUp value={projectCount} durationMs={1200} />
             </span>
           </div>
           <p className="text-xs font-mono text-muted mt-4 border-t border-white/[0.06] pt-3">
@@ -165,7 +166,7 @@ export const AdminOverviewPage = () => {
               </div>
             </div>
             <span className="text-3xl sm:text-4xl font-display font-bold text-indigo-300 block">
-              {skillCount}
+              <CountUp value={skillCount} durationMs={1200} />
             </span>
           </div>
           <p className="text-xs font-mono text-muted mt-4 border-t border-white/[0.06] pt-3">
