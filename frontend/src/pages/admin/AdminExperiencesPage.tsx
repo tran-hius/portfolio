@@ -135,7 +135,8 @@ export const AdminExperiencesPage = () => {
       setDeletingExp(null);
       loadData();
     } catch (err: any) {
-      alert(err.message || "Failed to delete experience");
+      console.error("Delete error:", err);
+      setError(err.message || "Failed to delete experience");
     } finally {
       setIsDeleting(false);
     }
@@ -385,9 +386,9 @@ export const AdminExperiencesPage = () => {
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         isOpen={Boolean(deletingExp)}
-        title="Delete Experience Entry"
-        itemName={deletingExp ? `${deletingExp.position} at ${deletingExp.company}` : undefined}
-        itemType="Experience"
+        title="Xác Nhận Xóa Kinh Nghiệm"
+        itemName={deletingExp ? `${deletingExp.position} tại ${deletingExp.company}` : undefined}
+        itemType="Kinh nghiệm"
         isDeleting={isDeleting}
         onConfirm={confirmDelete}
         onCancel={() => setDeletingExp(null)}

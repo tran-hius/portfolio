@@ -141,7 +141,8 @@ export const AdminProjectsPage = () => {
       setDeletingProject(null);
       loadProjects();
     } catch (err: any) {
-      alert(err.message || "Failed to delete project");
+      console.error("Delete error:", err);
+      setError(err.message || "Failed to delete project");
     } finally {
       setIsDeleting(false);
     }
@@ -464,9 +465,9 @@ export const AdminProjectsPage = () => {
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         isOpen={Boolean(deletingProject)}
-        title="Delete Project"
+        title="Xác Nhận Xóa Dự Án"
         itemName={deletingProject?.title}
-        itemType="Project"
+        itemType="Dự án"
         isDeleting={isDeleting}
         onConfirm={confirmDelete}
         onCancel={() => setDeletingProject(null)}

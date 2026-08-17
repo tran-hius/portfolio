@@ -118,7 +118,8 @@ export const AdminCertificatesPage = () => {
       setDeletingCert(null);
       loadData();
     } catch (err: any) {
-      alert(err.message || "Failed to delete certificate");
+      console.error("Delete error:", err);
+      setError(err.message || "Failed to delete certificate");
     } finally {
       setIsDeleting(false);
     }
@@ -328,9 +329,9 @@ export const AdminCertificatesPage = () => {
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         isOpen={Boolean(deletingCert)}
-        title="Delete Certificate Record"
+        title="Xác Nhận Xóa Chứng Chỉ"
         itemName={deletingCert?.title}
-        itemType="Certificate"
+        itemType="Chứng chỉ"
         isDeleting={isDeleting}
         onConfirm={confirmDelete}
         onCancel={() => setDeletingCert(null)}

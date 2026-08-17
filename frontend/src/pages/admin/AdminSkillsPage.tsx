@@ -139,7 +139,8 @@ export const AdminSkillsPage = () => {
       setDeletingSkill(null);
       loadSkills();
     } catch (err: any) {
-      alert(err.message || "Failed to delete skill");
+      console.error("Delete error:", err);
+      setError(err.message || "Failed to delete skill");
     } finally {
       setIsDeleting(false);
     }
@@ -456,9 +457,9 @@ export const AdminSkillsPage = () => {
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         isOpen={Boolean(deletingSkill)}
-        title="Delete Skill"
+        title="Xác Nhận Xóa Kỹ Năng"
         itemName={deletingSkill?.name}
-        itemType="Skill"
+        itemType="Kỹ năng"
         isDeleting={isDeleting}
         onConfirm={confirmDelete}
         onCancel={() => setDeletingSkill(null)}

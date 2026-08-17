@@ -130,7 +130,8 @@ export const AdminEducationPage = () => {
       setDeletingEdu(null);
       loadData();
     } catch (err: any) {
-      alert(err.message || "Failed to delete education record");
+      console.error("Delete error:", err);
+      setError(err.message || "Failed to delete education record");
     } finally {
       setIsDeleting(false);
     }
@@ -372,9 +373,9 @@ export const AdminEducationPage = () => {
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         isOpen={Boolean(deletingEdu)}
-        title="Delete Education Record"
+        title="Xác Nhận Xóa Học Vấn"
         itemName={deletingEdu ? `${deletingEdu.degree} - ${deletingEdu.institution}` : undefined}
-        itemType="Education Record"
+        itemType="Học vấn"
         isDeleting={isDeleting}
         onConfirm={confirmDelete}
         onCancel={() => setDeletingEdu(null)}
